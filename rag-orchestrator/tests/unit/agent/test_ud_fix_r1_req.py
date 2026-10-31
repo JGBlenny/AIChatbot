@@ -445,10 +445,10 @@ async def _candidate_turn(state) -> object:
     return await _rt(FakeProvider([])).run_turn(_pm(), "", state, image=_cand_image())
 
 
-def test_f2_key_spec_is_once_and_table_has_15_keys():
-    """SR-8：新鍵登記 `KEY_SPECS`（`Lifetime.ONCE`）、表 15 鍵。"""
+def test_f2_key_spec_is_once_and_registered():
+    """SR-8：新鍵登記 `KEY_SPECS`（`Lifetime.ONCE`）。鍵數由 `test_agent_session_req` 的封閉表測試守。"""
     assert KEY_SPECS[IMAGE_PICK_PENDING_KEY].lifetime is Lifetime.ONCE
-    assert len(KEY_SPECS) == 15
+    assert IMAGE_PICK_PENDING_KEY in KEY_SPECS
 
 
 async def test_f2_candidate_turn_saves_pending_and_clears_old_suggestion():

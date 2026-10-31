@@ -111,6 +111,16 @@ class FormField:
     hint: str = ""
     #: 「選對紀錄」片：`False` ⇒ 這一欄 ⛔ 列進「可以修改的有」等標籤句（客人講的比對值，不是卡上的欄位）。
     on_card: bool = True
+    # ── 填欄結構化（plan-fill-structured-20261030 §6.1 S3，`AGENT_FILL_STRUCTURED` on 才讀；off 路徑 ⛔ 讀）──
+    #: 範圍：封閉三動作由 `_closed_form` 從 `confirm_card._ClosedField` 同一來源帶出（⛔ 另寫一份）；`None` ⇒ 沒宣告。
+    lo: Any = None
+    hi: Any = None
+    #: `True` ⇒ 下界是開區間（`confirm_card._closed_value` 的 `number`：`lo < value <= hi`）。
+    lo_open: bool = False
+    #: `True` ⇒ 值是「今天之後加幾天」的天數（`days`）：只擋讓下游日期計算溢位的值（§9 Q9，⛔ 自創業務上限）。
+    date_offset: bool = False
+    #: on 路徑意圖說明改用的說明（空字串＝沿用 `hint`）；`hint` 含「照抄原話」者在 on 路徑改用這一句（N8）。
+    hint_structured: str = ""
 
 
 @dataclass(frozen=True)
@@ -208,6 +218,8 @@ def _closed_form(action: str) -> WriteForm:
             choices=tuple(f.choices or ()),
             # A4：標籤＝卡上中文（同一個 Mapping 的值，與 `choices` 逐位對應）。
             choice_labels=tuple((f.choices or {}).values()),
+            # 填欄結構化 S3（N7）：範圍與開下界照 `_ClosedField`／`_closed_value` 同一來源（只有 on 路徑讀）。
+            lo=f.lo, hi=f.hi, lo_open=(f.kind == "number"),
         ))
     present = {f.key for f in fields}
     for alt_keys in alternatives.values():
@@ -290,7 +302,7 @@ BILL_DUE_EXTEND_FORM: Final[WriteForm] = WriteForm(
                   max_len=_ESTATE_NAME_FIELD.max_len),
         # 期別片 P-2：`period` 型（⛔ `text` 的原話子字串規則：模型正規化成「2027/05」會被丟掉）。
         FormField("period", "期別", "period", max_len=30),
-        FormField("days", "延後天數", "int"),
+        FormField("days", "延後天數", "int", date_offset=True),
         # 使用者口述的帳單編號屬 user_words（數字閘驗），系統解析的編號 ⛔ 進草稿。
         FormField("bill_id", "帳單編號", "int"),
         FormField("date_expire_before", "原到期日", "date", source=SOURCE_SYSTEM),
@@ -329,7 +341,8 @@ BILL_DUE_EXTEND_FORM_PR: Final[WriteForm] = WriteForm(
         FormField("said_amount", "您說的金額", "int",
                   hint="使用者講的帳單金額，只填數字", on_card=False),
         FormField("said_range", "您說的計費期間", "range", max_len=30,
-                  hint="使用者講的帳單計費起訖日，照抄原話", on_card=False),
+                  hint="使用者講的帳單計費起訖日，照抄原話", on_card=False,
+                  hint_structured="使用者講的帳單計費起訖日"),
         FormField(_confirm_card.PICK_DISPLAY_KEY, "核對資料", "display", source=SOURCE_SYSTEM),
     ),
     requirements=BILL_DUE_EXTEND_FORM.requirements,
@@ -419,6 +432,10 @@ def _assert_forms() -> None:
                 raise AssertionError(f"write_forms：{form.action}.{f.key} range 必須是 user_words 來源")
             if not isinstance(f.hint, str) or "\n" in f.hint:
                 raise AssertionError(f"write_forms：{form.action}.{f.key} hint 必須是單行字串")
+            # 填欄結構化（N8）：on 路徑用的說明不得含「照抄」；`hint` 含「照抄」者必須另給 on 用的說明。
+            if (not isinstance(f.hint_structured, str) or "\n" in f.hint_structured
+                    or "照抄" in f.hint_structured or ("照抄" in f.hint and not f.hint_structured)):
+                raise AssertionError(f"write_forms：{form.action}.{f.key} hint_structured 不合（單行、⛔ 照抄）")
             if f.kind == "enum" and (not f.choices or f.payload_type not in ("str", "int")):
                 raise AssertionError(f"write_forms：{form.action}.{f.key} enum 缺值域或 payload 型別")
             # A4：enum 標籤與代碼逐位對應、標籤不重複、標籤與代碼不交疊（轉碼不歧義）。
@@ -967,12 +984,14 @@ def write_intent_key_domain() -> Tuple[str, ...]:
     return _ordered_unique(k for form in FORMS.values() for k in form.user_word_keys)
 
 
-def write_intent_description(*, enum_labels: bool = True) -> str:
+def write_intent_description(*, enum_labels: bool = True, fill_structured: bool = False) -> str:
     """意圖判斷呼叫的說明文字——動作名與各動作可填的鍵**由表單產生**（gpt-oss 不讀 enum，
     比照 `ask_target` 說明列值域的作法）。⛔ 放進主輸出 `AgentOutput` 的欄位說明。
 
     第 3 步 A4：`enum_labels=True`（`AGENT_WRITE_LIFECYCLE` on）⇒ enum 欄位列**標籤**（例
-    「非緊急／緊急」，程式再轉代碼）；`False`（off）⇒ 現行列代碼。"""
+    「非緊急／緊急」，程式再轉代碼）；`False`（off）⇒ 現行列代碼。
+    填欄結構化（`fill_structured=True`，`AGENT_FILL_STRUCTURED` on）：value 改寫成「依欄位值的寫法換算」，
+    ⛔ 「原話裡出現」；有 `hint_structured` 的欄位改用它（N8）。`False` ⇒ 逐字不變。"""
     parts = []
     for form in FORMS.values():
         keys = []
@@ -982,17 +1001,24 @@ def write_intent_description(*, enum_labels: bool = True) -> str:
             if f.kind == "enum":
                 shown = f.choice_labels if enum_labels else f.choices
                 keys.append(f"{f.key}（只能填 {'／'.join(shown)}）")
+            elif fill_structured and f.hint_structured:
+                keys.append(f"{f.key}（{f.hint_structured}）")
             elif f.hint:
                 # 「選對紀錄」片：有宣告說明的欄位附一句（基本表單無 hint ⇒ 逐字不變）。
                 keys.append(f"{f.key}（{f.hint}）")
             else:
                 keys.append(f.key)
         parts.append(f"{form.action}（{form.title_zh}）：{'、'.join(keys)}")
+    value_rule = (
+        "value 填使用者講過的值，依「欄位值的寫法」寫（⛔ 推測、⛔ 代寫），使用者沒講的欄位不要列，"
+        if fill_structured else
+        "value 只填使用者原話裡出現的值（⛔ 推測、⛔ 代寫），使用者沒講的欄位不要列，"
+    )
     return (
         "使用者這句是要建立或變更系統資料、或在回答「進行中的建立」時填對應動作；"
         f"改談別的事或一般問答 action 填 {INTENT_NONE}、fields 給空陣列。"
         "action 只能是下列動作之一，fields 每筆 {key, value}，key 只能用該動作列出的鍵；"
-        "value 只填使用者原話裡出現的值（⛔ 推測、⛔ 代寫），使用者沒講的欄位不要列，"
+        + value_rule +
         "只表達要建立而還沒講任何欄位時 fields 給空陣列；日期寫成 YYYY-MM-DD。"
         "可用的動作與鍵：" + "；".join(parts) + "。"
     )
@@ -1113,10 +1139,11 @@ def intent_record_rechoice(obj: Any) -> Optional[str]:
     return value if isinstance(value, str) and value in RECORD_RECHOICE_DOMAIN else None
 
 
-#: 意圖判斷呼叫的系統句（值域與鍵由表單產生；末尾加 `WRITE_INTENT_NONE_RULE`）。⛔ 含任何使用者值——輸入
-#: 是本句＋對話歷史；**唯一例外**：候選集有效的回合（`pick_rule=True`），呼叫端另附
-#: 一段 nonce 包住、每列只放投影欄且先過 `sanitize_data_piece` 的候選清單資料段，本句末尾接
-#: `PICK_ID_RULE`。其餘回合 ⛔ 附任何資料段（`pick_rule=False` 時系統句不含這段）。
+#: 意圖判斷呼叫的系統句（值域與鍵由表單產生；末尾加 `WRITE_INTENT_NONE_RULE`）。系統句本身 ⛔ 含任何使用者值——輸入
+#: 是本句＋對話歷史；呼叫端另附的資料段（都在意圖呼叫自己的 messages、nonce 包住、每個值先過 `sanitize_data_piece`）
+#: 有兩種：候選集有效的回合（`pick_rule=True`）的候選清單資料段（本句末尾接 `PICK_ID_RULE`）；
+#: 填欄結構化 on（`fill_structured=True`，plan-fill-structured-20261030 S1、§6.3）有草稿的回合，草稿目前值的狀態段
+#: （`fill_state_text`）——這是現行規約的改動，只在意圖呼叫的輸入、⛔ 系統句、⛔ 主模型輸入。其餘回合 ⛔ 附任何資料段。
 def write_intent_system_prompt(*, enum_labels: bool = True,
                                modifies_flag: Optional[bool] = None,
                                pick_rule: bool = False,
@@ -1124,7 +1151,9 @@ def write_intent_system_prompt(*, enum_labels: bool = True,
                                target_picked: Optional[str] = None,
                                dialog_act: bool = False,
                                data_text: bool = False,
-                               asked_labels: Optional[Sequence[str]] = None) -> str:
+                               asked_labels: Optional[Sequence[str]] = None,
+                               fill_structured: bool = False,
+                               today: Optional[date] = None) -> str:
     """意圖判斷呼叫的系統句（呼叫當下由 `FORMS` 產生；A4 `enum_labels` 見
     `write_intent_description`）。第 3 步 #9g：`modifies_flag`（預設跟 `enum_labels`＝開關 on）⇒
     第一段末尾（說明之前）接 `MODIFIES_SUBMITTED_RULE`；系統句結尾仍是「說明＋\\n＋
@@ -1139,7 +1168,14 @@ def write_intent_system_prompt(*, enum_labels: bool = True,
     ＋緊接 `DATA_TEXTS_NAME_NOTE`（修復輪 5）
     （同時 `pick_rule=True` ⇒ 其後緊接 `DATA_TEXTS_PICK_NOTE`），再緊接 `FIELD_NOT_IN_FORM_NOTE`＋`ANOTHER_RECORD_NOTE`
     （修復輪 1 RC-W2、RC-W3）；另給 `asked_labels`（追問回合：程式追問欄位的表單標籤）⇒ 再接「\\n＋`answer_text_rule`」；
-    並在 `WRITE_INTENT_NONE_RULE` 之後緊接 `WRITE_INTENT_PARTIAL_NOTE`。`False` ⇒ 逐字不變。"""
+    並在 `WRITE_INTENT_NONE_RULE` 之後緊接 `WRITE_INTENT_PARTIAL_NOTE`。`False` ⇒ 逐字不變。
+    填欄結構化：`fill_structured=True`（需 `today`）⇒ 改走 `_write_intent_system_prompt_structured`（`data_text`、
+    `asked_labels` 不用）；`False` ⇒ 逐字不變。"""
+    if fill_structured:
+        return _write_intent_system_prompt_structured(
+            enum_labels=enum_labels, modifies_flag=modifies_flag, pick_rule=pick_rule,
+            rechoice_type=rechoice_type, target_picked=target_picked, dialog_act=dialog_act,
+            today=today)
     flag = enum_labels if modifies_flag is None else modifies_flag
     rechoice_rule = record_rechoice_rule(rechoice_type) if rechoice_type is not None else None
     target_rule = pick_target_rule(target_picked) if target_picked is not None else None
@@ -1173,6 +1209,37 @@ def write_intent_system_prompt(*, enum_labels: bool = True,
     )
 
 
+def _write_intent_system_prompt_structured(*, enum_labels: bool, modifies_flag: Optional[bool],
+                                           pick_rule: bool, rechoice_type: Optional[str],
+                                           target_picked: Optional[str], dialog_act: bool,
+                                           today: Optional[date]) -> str:
+    """填欄結構化 on 的系統句（plan-fill-structured-20261030 S2）：開頭句與說明去掉「照抄原話、⛔ 改寫」；
+    保留 `FIELD_NOT_IN_FORM_NOTE`、`ANOTHER_RECORD_NOTE`（§6.3）與 `WRITE_INTENT_PARTIAL_NOTE`；最末接「欄位值的寫法」
+    （依型別產生、附今天日期）與指令欄的語意宣告 `FILL_COMMAND_RULE`。⛔ `DATA_TEXTS_*`、`answer_text`（S5）。"""
+    if not isinstance(today, date):
+        raise ValueError("write_intent_system_prompt(fill_structured=True) 需要 today")
+    flag = enum_labels if modifies_flag is None else modifies_flag
+    rechoice_rule = record_rechoice_rule(rechoice_type) if rechoice_type is not None else None
+    target_rule = pick_target_rule(target_picked) if target_picked is not None else None
+    return (
+        "你只做一件事：讀對話，判斷使用者**最新一句**（可參照前文）是不是在要求建立或變更系統資料，"
+        "或是在回答進行中的建立所需的資料。"
+        "是 ⇒ action 填對應動作，fields 填使用者講的值，照下面「欄位值的寫法」換算後填（⛔ 推測使用者沒講的值）；"
+        f"不是 ⇒ action 填 {INTENT_NONE}、fields 空陣列。"
+        + (MODIFIES_SUBMITTED_RULE if flag else "")
+        + "\n"
+        + write_intent_description(enum_labels=enum_labels, fill_structured=True)
+        + "\n" + WRITE_INTENT_NONE_RULE + WRITE_INTENT_PARTIAL_NOTE
+        + ("\n" + PICK_ID_RULE if pick_rule else "")
+        + ("\n" + rechoice_rule if rechoice_rule is not None else "")
+        + ("\n" + target_rule if target_rule is not None else "")
+        + ("\n" + DIALOG_ACT_RULE if dialog_act else "")
+        + "\n" + FIELD_NOT_IN_FORM_NOTE + ANOTHER_RECORD_NOTE
+        + "\n" + fill_value_format_rule(today)
+        + "\n" + FILL_COMMAND_RULE
+    )
+
+
 #: 預設（開關 on）的系統句；保留常數供既有引用（runtime 改呼叫 `write_intent_system_prompt`）。
 WRITE_INTENT_SYSTEM_PROMPT: Final[str] = write_intent_system_prompt()
 
@@ -1184,7 +1251,9 @@ def write_intent_call_schema(*, enum_labels: bool = True,
                              target_picked: Optional[str] = None,
                              dialog_act: bool = False,
                              data_text: bool = False,
-                             asked_labels: Optional[Sequence[str]] = None) -> dict:
+                             asked_labels: Optional[Sequence[str]] = None,
+                             fill_structured: bool = False,
+                             today: Optional[date] = None) -> dict:
     """意圖判斷呼叫的 strict schema：
     `{action: <5 支動作名＋none>, fields: [{key, value}]}`，每一層 object 都封閉。
     根層與 `action`／`key` 的 description 都列出表單導出的值域（gpt-oss 不讀 enum）。
@@ -1193,13 +1262,20 @@ def write_intent_call_schema(*, enum_labels: bool = True,
     （陣列，每項 `{op: pick|nth|name|clear, value: string}`、封閉；`fields.items.key` 照原樣保留 `NAME_KEYS`，供換動作
     回合用）；不帶 `pick_id`、`rechoice`、`new_name`。
     填欄只填答覆：`data_text=True` ⇒ 根層最後加必填 `data_texts`（字串陣列）；另給 `asked_labels`（追問回合）⇒
-    再加必填 `answer_text`（字串）。`False` ⇒ schema 與改動前逐位相同。"""
+    再加必填 `answer_text`（字串）。`False` ⇒ schema 與改動前逐位相同。
+    填欄結構化（`fill_structured=True`）：根層說明改用 on 版說明；⛔ `data_texts`、`answer_text`（`data_text`、
+    `asked_labels` 不用）；根層最後加必填 `command`（`FILL_COMMAND_DOMAIN`）與 `correct_keys`（鍵值域內的字串陣列）。
+    `today` 只供與系統句共用同一組關鍵字參數（schema 不含日期）。"""
     actions = intent_action_domain()
     keys = write_intent_key_domain()
     flag = enum_labels if modifies_flag is None else modifies_flag
+    if fill_structured:
+        data_text = False
+        asked_labels = None
     schema = {
         "type": "object",
-        "description": write_intent_description(enum_labels=enum_labels),
+        "description": write_intent_description(enum_labels=enum_labels,
+                                                fill_structured=fill_structured),
         "properties": {
             "action": {
                 "type": "string", "enum": list(actions),
@@ -1278,6 +1354,15 @@ def write_intent_call_schema(*, enum_labels: bool = True,
         if answer_rule is not None:
             schema["properties"][ANSWER_TEXT_KEY] = {"type": "string", "description": answer_rule}
             schema["required"] = list(schema["required"]) + [ANSWER_TEXT_KEY]
+    if fill_structured:
+        # 填欄結構化 S2：指令欄（封閉值域）＋ `correct` 要改的鍵（鍵值域內）；兩欄必填、放最後。
+        schema["properties"][FILL_COMMAND_KEY] = {
+            "type": "string", "enum": list(FILL_COMMAND_DOMAIN), "description": FILL_COMMAND_RULE,
+        }
+        schema["properties"][FILL_CORRECT_KEYS_KEY] = {
+            "type": "array", "items": {"type": "string", "enum": list(keys)},
+        }
+        schema["required"] = list(schema["required"]) + [FILL_COMMAND_KEY, FILL_CORRECT_KEYS_KEY]
     return schema
 
 
@@ -1288,11 +1373,14 @@ def write_intent_response_format(*, enum_labels: bool = True,
                                  target_picked: Optional[str] = None,
                                  dialog_act: bool = False,
                                  data_text: bool = False,
-                                 asked_labels: Optional[Sequence[str]] = None) -> dict:
+                                 asked_labels: Optional[Sequence[str]] = None,
+                                 fill_structured: bool = False,
+                                 today: Optional[date] = None) -> dict:
     schema = write_intent_call_schema(enum_labels=enum_labels, modifies_flag=modifies_flag,
                                       pick_ids=pick_ids, rechoice_type=rechoice_type,
                                       target_picked=target_picked, dialog_act=dialog_act,
-                                      data_text=data_text, asked_labels=asked_labels)
+                                      data_text=data_text, asked_labels=asked_labels,
+                                      fill_structured=fill_structured, today=today)
     return {
         "type": "json_schema",
         "json_schema": {"name": WRITE_INTENT_SCHEMA_NAME, "strict": True,
@@ -1456,6 +1544,294 @@ def intent_answer_text(obj: Any) -> Optional[str]:
         return None
     value = obj.get(ANSWER_TEXT_KEY)
     return value if isinstance(value, str) else None
+
+
+# ---------------------------------------------------------------------------
+# 填欄結構化（plan-fill-structured-20261030 §6；DSP-128）：開關、輸出格式、狀態段、固定句、trace 標記
+# 分工（DSP-091、DSP-127）：AI 理解客人的話、輸出換算好的值與指令；程式只驗格式、範圍、值域，並決定下一步。
+# ⛔ 本節任何函式收使用者原話。
+# ---------------------------------------------------------------------------
+#: 開關 `AGENT_FILL_STRUCTURED`：只有 `on` 啟動；**未設或空字串＝off**、`off`＝off；其他值 ⇒ 啟動失敗（§6 開關解析，
+#: 安審 F5；⛔ 照抄其他開關「未設＝on」）。on 要求 `FILL_STRUCTURED_PREREQ_ENVS` 全 on（建構期檢查，runtime）。
+FILL_STRUCTURED_ENV: Final[str] = "AGENT_FILL_STRUCTURED"
+FILL_STRUCTURED_PREREQ_ENVS: Final[Tuple[str, ...]] = (
+    WRITE_DRAFT_ENV, WRITE_LIFECYCLE_ENV, WRITE_PROPOSAL_ENV, CLOSING_HANDOFF_ENV)
+
+
+def fill_structured_enabled_from_env(environ: Optional[Mapping[str, str]] = None) -> bool:
+    """`on` ⇒ `True`；未設、空字串（去空白後）或 `off` ⇒ `False`；其他值 ⇒ `ValueError`（啟動失敗並說明原因）。"""
+    env = os.environ if environ is None else environ
+    raw = env.get(FILL_STRUCTURED_ENV, "")
+    value = (raw or "").strip()
+    if value == "on":
+        return True
+    if value in ("", "off"):
+        return False
+    raise ValueError(
+        f"{FILL_STRUCTURED_ENV}={raw!r} 不在允許值域（on／off；未設或空字串＝off）"
+    )
+
+
+#: 指令欄（S2）：AI 對最新一句的理解；下一步（收不收、覆寫、換單確認）由程式決定。
+FILL_COMMAND_KEY: Final[str] = "command"
+FILL_CORRECT_KEYS_KEY: Final[str] = "correct_keys"
+FILL_COMMAND_FILL: Final[str] = "fill"
+FILL_COMMAND_CORRECT: Final[str] = "correct"
+FILL_COMMAND_NEW_REQUEST: Final[str] = "new_request"
+FILL_COMMAND_NONE: Final[str] = "none"
+FILL_COMMAND_DOMAIN: Final[Tuple[str, ...]] = (
+    FILL_COMMAND_FILL, FILL_COMMAND_CORRECT, FILL_COMMAND_NEW_REQUEST, FILL_COMMAND_NONE)
+#: 指令欄的語意宣告（A9 允許新增的兩段提示詞之一；schema `command.description` 與系統句末尾同一句）。
+FILL_COMMAND_RULE: Final[str] = (
+    "command：使用者最新一句對進行中這一筆（目前狀態見標示為資料的那一段）的意思——"
+    "補資料或回答追問 ⇒ fill；要改已經填過的欄位 ⇒ correct，並在 correct_keys 列出要改的鍵；"
+    "要另外辦一件事、或另建一筆（另一份、另一間、再開一張）⇒ new_request；跟填資料無關 ⇒ none。"
+    "correct_keys：command 是 correct 時列出要改的鍵，其他情況給空陣列。"
+)
+
+
+def _structured_keys(kinds: Tuple[str, ...]) -> Tuple[str, ...]:
+    return _ordered_unique(f.key for form in FORMS.values() for f in form.fields
+                           if f.source == SOURCE_USER_WORDS and f.kind in kinds)
+
+
+def not_before_today_keys() -> Tuple[str, ...]:
+    """標了 `NOT_BEFORE_TODAY`、且是 `user_words` 來源的日期欄位鍵（N17；由 `CONFIRM_FIELD_ATTRS` 宣告導出）。"""
+    out: list = []
+    for action, attrs in _confirm_card.CONFIRM_FIELD_ATTRS.items():
+        form = FORMS.get(action)
+        for key, marks in attrs.items():
+            f = form.field(key) if form is not None else None
+            if (f is not None and f.source == SOURCE_USER_WORDS and f.kind == "date"
+                    and _confirm_card.NOT_BEFORE_TODAY in marks and key not in out):
+                out.append(key)
+    return tuple(out)
+
+
+def field_not_before_today(action: Any, key: Any) -> bool:
+    attrs = _confirm_card.CONFIRM_FIELD_ATTRS.get(action, {}) if isinstance(action, str) else {}
+    return _confirm_card.NOT_BEFORE_TODAY in attrs.get(key, frozenset())
+
+
+#: 「欄位值的寫法」（A9 允許新增的兩段提示詞之一）：依表單型別產生、附今天日期；輸出格式宣告，⛔ 含使用者值。
+FILL_VALUE_FORMAT_TEMPLATE: Final[str] = (
+    "欄位值的寫法（今天是 {today}）：值只能來自使用者講的話，⛔ 取資料段（含目前狀態那一段）與助理回話裡的字；"
+    "數字欄（{number_keys}）填換算後的阿拉伯數字，只含數字（需要時可有小數點），不含單位與文字；"
+    "日期欄填 YYYY-MM-DD；使用者沒講年份時，{nbt_keys} 填今天或之後最近的那一天，"
+    "其他日期欄（{other_date_keys}）沒講年份就不要填；文字欄只填值本身，不含欄名。"
+)
+
+
+def fill_value_format_rule(today: date) -> str:
+    nbt = not_before_today_keys()
+    dates = [k for k in _structured_keys(("date",)) if k not in nbt]
+    return FILL_VALUE_FORMAT_TEMPLATE.format(
+        today=iso_date(today),
+        number_keys="、".join(_structured_keys(("int", "number"))) or DRAFT_LINE_NONE,
+        nbt_keys="、".join(nbt) or DRAFT_LINE_NONE,
+        other_date_keys="、".join(dates) or DRAFT_LINE_NONE,
+    )
+
+
+def intent_fill_command(obj: Any) -> Tuple[str, Tuple[str, ...], bool]:
+    """意圖呼叫解析出的原始物件 → `(指令, correct_keys, 異常)`（`WriteIntent` 忽略多餘鍵，故由原始物件讀）。
+    值域外、缺鍵、非字串 ⇒ `fill`＋異常；`correct` 沒附非空的 `correct_keys`（字串陣列）⇒ `fill`＋異常
+    （N12：⛔ 當 `correct`）。`correct_keys` 只留字串、去重保序；鍵是否屬於該動作由呼叫端比對表單。"""
+    if not isinstance(obj, Mapping):
+        return FILL_COMMAND_FILL, (), True
+    cmd = obj.get(FILL_COMMAND_KEY)
+    if not isinstance(cmd, str) or cmd not in FILL_COMMAND_DOMAIN:
+        return FILL_COMMAND_FILL, (), True
+    if cmd != FILL_COMMAND_CORRECT:
+        return cmd, (), False
+    raw = obj.get(FILL_CORRECT_KEYS_KEY)
+    if not isinstance(raw, list) or any(not isinstance(k, str) for k in raw):
+        return FILL_COMMAND_FILL, (), True
+    keys = _ordered_unique(raw)
+    if not keys:
+        return FILL_COMMAND_FILL, (), True
+    return cmd, keys, False
+
+
+#: S1 狀態段的資料段名稱（`wrap_tool_data` 的 `tool_name`）。
+FILL_STATE_DATA_LABEL: Final[str] = "write_draft_state"
+FILL_STATE_NONE: Final[str] = "（空）"
+
+
+def fill_state_value(f: FormField, value: Any) -> str:
+    """狀態段與覆寫行裡的值：先過 `sanitize_data_piece` 再依 `value_max_len` 截長（email、phone 也一樣，安審 F3）。"""
+    from services.agent.completed_actions import sanitize_data_piece
+    text = sanitize_data_piece(value)
+    return text[:value_max_len(f)]
+
+
+def fill_state_text(draft: Mapping[str, Any], asked: Sequence[str], card_action: Optional[str]) -> Optional[str]:
+    """S1 狀態段內容（程式產生）：動作、表單欄位清單（鍵、標籤、型別）、各欄目前值、剛問的欄、卡出了沒與卡上動作。
+    ⛔ `pending_id`（安審 F15）。草稿形狀不合 ⇒ `None`（呼叫端不附）。值一律經 `fill_state_value`。"""
+    action = draft.get("action") if isinstance(draft, Mapping) else None
+    form = FORMS.get(action) if isinstance(action, str) else None
+    fields = draft.get("fields") if isinstance(draft, Mapping) else None
+    if form is None or not isinstance(fields, Mapping):
+        return None
+    lines = [f"進行中的動作：{form.action}（{form.title_zh}）", "欄位（鍵｜標籤｜型別｜目前值）："]
+    for f in form.fields:
+        if f.source != SOURCE_USER_WORDS:
+            continue
+        cur = fields.get(f.key)
+        shown = fill_state_value(f, cur) if isinstance(cur, str) and cur.strip() else ""
+        lines.append(f"- {f.key}｜{f.label}｜{f.kind}｜{shown or FILL_STATE_NONE}")
+    asked_keys = [k for k in (asked or ()) if isinstance(k, str) and form.field(k) is not None]
+    lines.append("剛問的欄：" + ("、".join(asked_keys) or DRAFT_LINE_NONE))
+    if isinstance(card_action, str) and card_action in FORMS:
+        lines.append(f"確認卡：已出（卡上動作 {card_action}）")
+    else:
+        lines.append("確認卡：未出")
+    return "\n".join(lines)
+
+
+#: S3 不收時的重問固定句（N11；`{label}` 只會是表單標籤）。依欄位分：`NOT_BEFORE_TODAY` 日期欄、其他日期欄、數字欄、文字欄。
+FS_REASK_DATE_NBT_TEMPLATE: Final[str] = "{label}請講今天或之後的日期，例如 11/12 或 2026-11-12。"
+FS_REASK_DATE_TEMPLATE: Final[str] = "{label}請講含年份的日期，例如 2026-11-12。"
+FS_REASK_NUMBER_TEMPLATE: Final[str] = "{label}請講阿拉伯數字，例如 20000。"
+FS_REASK_TEXT_TEMPLATE: Final[str] = "{label}請再講一次。"
+FS_REASK_LEAD: Final[str] = "這次說的{labels}沒有收下，仍是原本的內容。"
+
+
+def fill_reask_text(action: Any, keys: Sequence[str]) -> Optional[str]:
+    """S3 不收的欄（表單鍵，依序）⇒ 程式重問固定句；沒有可問的欄 ⇒ `None`。"""
+    form = FORMS.get(action) if isinstance(action, str) else None
+    if form is None:
+        return None
+    labels: list = []
+    parts: list = []
+    for key in keys or ():
+        f = form.field(key)
+        if f is None or f.label in labels:
+            continue
+        labels.append(f.label)
+        if f.kind == "date":
+            tpl = (FS_REASK_DATE_NBT_TEMPLATE if field_not_before_today(form.action, f.key)
+                   else FS_REASK_DATE_TEMPLATE)
+        elif f.kind in ("int", "number"):
+            tpl = FS_REASK_NUMBER_TEMPLATE
+        else:
+            tpl = FS_REASK_TEXT_TEMPLATE
+        parts.append(tpl.format(label=f.label))
+    if not parts:
+        return None
+    return FS_REASK_LEAD.format(labels="、".join(labels)) + "".join(parts)
+
+
+#: S4 換單確認（按鈕值固定、⛔ 帶欄位值；`{cur}`／`{new}` 只會是表單動作中文名）。
+FILL_SWITCH_YES: Final[str] = "switch:yes"
+FILL_SWITCH_NO: Final[str] = "switch:no"
+FILL_SWITCH_ASK_OTHER_TEMPLATE: Final[str] = (
+    "目前這筆「{cur}」還沒送出。要放下這筆，改辦「{new}」嗎？請按「換」或「不換」。"
+)
+FILL_SWITCH_ASK_SAME_TEMPLATE: Final[str] = (
+    "目前這筆「{cur}」還沒送出。要放下這筆，另開一筆新的「{new}」嗎？請按「換」或「不換」。"
+)
+FILL_SWITCH_KEPT_TEMPLATE: Final[str] = "好的，保留目前這筆「{cur}」。"
+FILL_SWITCH_INVALID_TEXT: Final[str] = "這個選擇已失效，請再說一次要辦的事。"
+#: 按鈕回合寫進對話紀錄的使用者端（⛔ 按鈕值本身）。
+FILL_SWITCH_DIALOG_YES: Final[str] = "（按了「換」）"
+FILL_SWITCH_DIALOG_NO: Final[str] = "（按了「不換」）"
+
+
+def fill_switch_quick_replies() -> list:
+    return [{"label": "換", "value": FILL_SWITCH_YES}, {"label": "不換", "value": FILL_SWITCH_NO}]
+
+
+def parse_fill_switch(value: Any) -> Optional[bool]:
+    """按鈕值 ⇒ `True`（換）／`False`（不換）；不是這兩個值（含前後空白、大小寫不同）⇒ `None`。"""
+    if value == FILL_SWITCH_YES:
+        return True
+    if value == FILL_SWITCH_NO:
+        return False
+    return None
+
+
+def fill_switch_ask_text(cur_action: Any, new_action: Any) -> Optional[str]:
+    cur = FORMS.get(cur_action) if isinstance(cur_action, str) else None
+    new = FORMS.get(new_action) if isinstance(new_action, str) else None
+    if cur is None or new is None:
+        return None
+    tpl = FILL_SWITCH_ASK_SAME_TEMPLATE if cur.action == new.action else FILL_SWITCH_ASK_OTHER_TEMPLATE
+    return tpl.format(cur=cur.title_zh, new=new.title_zh)
+
+
+#: 待換請求（session 鍵 `fill_switch`，只活一回合）：封閉三鍵；值只存過 S3 的意圖值（⛔ 原話）。
+FILL_SWITCH_KEYS: Final[frozenset] = frozenset({"action", "fields", "creator"})
+
+
+def new_fill_switch(action: str, fields: Mapping[str, str], creator: str) -> dict:
+    return {"action": action, "fields": dict(fields), "creator": creator}
+
+
+def load_fill_switch(raw: Any) -> Optional[dict]:
+    """讀回的待換請求——一律視為不可信：形狀、動作、欄位鍵、值型別與長度不合 ⇒ `None`。"""
+    if not isinstance(raw, dict) or set(raw) != FILL_SWITCH_KEYS:
+        return None
+    action, fields, creator = raw.get("action"), raw.get("fields"), raw.get("creator")
+    form = FORMS.get(action) if isinstance(action, str) else None
+    if form is None or not isinstance(fields, dict) or not isinstance(creator, str) or not creator:
+        return None
+    for key, value in fields.items():
+        f = form.field(key)
+        if (f is None or f.source != SOURCE_USER_WORDS or not isinstance(value, str)
+                or not value.strip() or len(value) > value_max_len(f)):
+            return None
+    return {"action": action, "fields": dict(fields), "creator": creator}
+
+
+#: 截點（session 鍵 `fill_cut`）：`total`＝本會話累計寫進 `dialog` 的訊息數，`cut`＝最近一次草稿結束時的 `total`。
+FILL_CUT_KEYS: Final[frozenset] = frozenset({"total", "cut"})
+_FILL_CUT_MAX: Final[int] = 10 ** 9
+
+
+def load_fill_cut(raw: Any) -> Optional[dict]:
+    if not isinstance(raw, dict) or set(raw) != FILL_CUT_KEYS:
+        return None
+    total, cut = raw.get("total"), raw.get("cut")
+    if (isinstance(total, bool) or isinstance(cut, bool) or not isinstance(total, int)
+            or not isinstance(cut, int) or not 0 <= cut <= total <= _FILL_CUT_MAX):
+        return None
+    return {"total": total, "cut": cut}
+
+
+#: S4 覆寫後卡外列的一行（不進卡、不進雜湊；值經 `fill_state_value`）。
+FILL_OVERWRITE_LINE_TEMPLATE: Final[str] = "{label}：{old} → {new}"
+
+
+def fill_overwrite_lines(action: Any, changes: Sequence[Tuple[str, str, str]]) -> Optional[str]:
+    """`(鍵, 舊值, 新值)` 依序 ⇒ 「欄：舊 → 新」多行；沒有 ⇒ `None`。"""
+    form = FORMS.get(action) if isinstance(action, str) else None
+    if form is None:
+        return None
+    lines: list = []
+    for key, old, new in changes or ():
+        f = form.field(key)
+        if f is None:
+            continue
+        lines.append(FILL_OVERWRITE_LINE_TEMPLATE.format(
+            label=f.label, old=fill_state_value(f, old), new=fill_state_value(f, new)))
+    return "\n".join(lines) if lines else None
+
+
+#: 填欄結構化的 trace 標記（安審 F14：⛔ 插入 value、標籤或原話）。
+V_FS_FORMAT_INVALID: Final[str] = "fill_structured_format_invalid"
+V_FS_OUT_OF_BOUNDS: Final[str] = "fill_structured_out_of_bounds"
+V_FS_FILLED_KEPT: Final[str] = "fill_structured_filled_kept"
+V_FS_COMMAND_INVALID: Final[str] = "fill_structured_command_invalid"
+V_FS_PICK_NOT_IN_CANDIDATES: Final[str] = "fill_structured_pick_not_in_candidates"
+V_FS_SWITCH_ASKED: Final[str] = "fill_structured_switch_asked"
+V_FS_SWITCH_CONFIRMED: Final[str] = "fill_structured_switch_confirmed"
+#: 處理順序（主會話定，§10 第 5 點 (4)）：同回合主模型提議開的空草稿、被意圖結果的另一支動作直接取代（不出 S4）。
+V_FS_PROPOSAL_DRAFT_REPLACED: Final[str] = "fill_structured_proposal_draft_replaced"
+V_FS_MARKS: Final[frozenset] = frozenset({
+    V_FS_FORMAT_INVALID, V_FS_OUT_OF_BOUNDS, V_FS_FILLED_KEPT, V_FS_COMMAND_INVALID,
+    V_FS_PICK_NOT_IN_CANDIDATES, V_FS_SWITCH_ASKED, V_FS_SWITCH_CONFIRMED, V_FS_PROPOSAL_DRAFT_REPLACED,
+})
 
 
 #: 回應解析的三種結果（`parse_write_intent_content` 的第二格）。
@@ -1940,4 +2316,19 @@ __all__ = [
     "FILL_DATA_TEXT_WIDE_ENV", "fill_data_text_wide_enabled_from_env", "FILL_WIDE_NOT_APPLIED_TEMPLATE",
     "FILL_WIDE_NOT_APPLIED_SEP", "fill_wide_not_applied_text", "V_FILL_WIDE_DATA_UNKNOWN",
     "V_FILL_WIDE_CARRY_OVER", "FIELD_NOT_IN_FORM_NOTE", "ANOTHER_RECORD_NOTE",
+    # 填欄結構化（plan-fill-structured-20261030）
+    "FILL_STRUCTURED_ENV", "FILL_STRUCTURED_PREREQ_ENVS", "fill_structured_enabled_from_env",
+    "FILL_COMMAND_KEY", "FILL_CORRECT_KEYS_KEY", "FILL_COMMAND_FILL", "FILL_COMMAND_CORRECT",
+    "FILL_COMMAND_NEW_REQUEST", "FILL_COMMAND_NONE", "FILL_COMMAND_DOMAIN", "FILL_COMMAND_RULE",
+    "not_before_today_keys", "field_not_before_today", "FILL_VALUE_FORMAT_TEMPLATE", "fill_value_format_rule",
+    "intent_fill_command", "FILL_STATE_DATA_LABEL", "FILL_STATE_NONE", "fill_state_value", "fill_state_text",
+    "FS_REASK_DATE_NBT_TEMPLATE", "FS_REASK_DATE_TEMPLATE", "FS_REASK_NUMBER_TEMPLATE", "FS_REASK_TEXT_TEMPLATE",
+    "FS_REASK_LEAD", "fill_reask_text", "FILL_SWITCH_YES", "FILL_SWITCH_NO", "FILL_SWITCH_ASK_OTHER_TEMPLATE",
+    "FILL_SWITCH_ASK_SAME_TEMPLATE", "FILL_SWITCH_KEPT_TEMPLATE", "FILL_SWITCH_INVALID_TEXT",
+    "FILL_SWITCH_DIALOG_YES", "FILL_SWITCH_DIALOG_NO", "fill_switch_quick_replies", "parse_fill_switch",
+    "fill_switch_ask_text", "FILL_SWITCH_KEYS", "new_fill_switch", "load_fill_switch", "FILL_CUT_KEYS",
+    "load_fill_cut", "FILL_OVERWRITE_LINE_TEMPLATE", "fill_overwrite_lines",
+    "V_FS_FORMAT_INVALID", "V_FS_OUT_OF_BOUNDS", "V_FS_FILLED_KEPT", "V_FS_COMMAND_INVALID",
+    "V_FS_PICK_NOT_IN_CANDIDATES", "V_FS_SWITCH_ASKED", "V_FS_SWITCH_CONFIRMED", "V_FS_PROPOSAL_DRAFT_REPLACED",
+    "V_FS_MARKS",
 ]

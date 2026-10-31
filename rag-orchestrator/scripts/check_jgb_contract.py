@@ -54,11 +54,11 @@ WRAPPERS = {"_request", "_post_request", "_patch_request", "_send", "_assistant_
 
 #: 允許「不在 JGB」的 方法＋路徑 ⇒ (守衛所在函式, WRITE_NOT_SUPPORTED_ACTIONS 內的對應名稱)。
 #: 新增項目前先確認 JGB 真的沒有（或還沒做），並且兩道守衛都在。
+#: 寫入改接片（W3）：建物件／合約／手動帳單三條 POST 與改到期日的 `PATCH /api/external/v1/bills/{}`
+#: 在 jgb2 `origin/staging` `544e8592eb` 都有路由，不再列；舊的 `PATCH /agent/v1/bills/{}` 只剩替身路徑
+#: （開關 off、`use_mock=True`）會送，仍須守衛。
 GUARDED: dict[tuple[str, str], tuple[str, str]] = {
     ("PATCH", "/agent/v1/bills/{}"): ("agent_patch_bill_due_date", "BILL_DUE_EXTEND_ACTION"),
-    ("POST", "/api/external/v1/estates"): ("_assistant_write", "estate_create"),
-    ("POST", "/api/external/v1/contracts"): ("_assistant_write", "contract_create"),
-    ("POST", "/api/external/v1/bills/manual"): ("_assistant_write", "manual_bill_create"),
 }
 
 

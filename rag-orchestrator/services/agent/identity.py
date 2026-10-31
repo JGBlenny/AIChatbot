@@ -19,16 +19,35 @@ Audience = Literal["prospect", "property_manager", "tenant"]
 Stage = Literal["M0", "M1", "M2", "M3", "M4", "M5"]
 IdentitySource = Literal["entry", "anonymous"]
 
-#: 呼叫入口（DSP-038-1／子 spec `agent-write-tools` W1）。⛔ **不是認證訊號**，
-#: 也不是 `IdentitySource`（那是「有沒有帶 role_id／user_id」的對話控制值）——
-#: 這一欄回答的是「這個身分是從哪一道門進來的」，唯一用途是
+#: 呼叫入口（DSP-038-1／子 spec `agent-write-tools` W1；DSP-131 加 `dialogue`）。
+#: ⛔ **不是認證訊號**，也不是 `IdentitySource`（那是「有沒有帶 role_id／user_id」的
+#: 對話控制值）——這一欄回答的是「這個身分是從哪一道門進來的」，唯一用途是
 #: `ToolRegistry.specs_for` 的 `mcp_only` 閘與 Runtime 的確認兌現段守門。
-EntryChannel = Literal["mcp", "rest"]
+#: - `"mcp"`：`/mcp` 門面（MCP streamable HTTP）。
+#: - `"dialogue"`：專用對話 API（`routers/agent_dialogue.py`，一回合一次 HTTP POST）。
+#: - `"rest"`：其餘建構點（預設，fail-closed）。
+EntryChannel = Literal["mcp", "dialogue", "rest"]
 
-#: `Identity.entry` 的預設值＝**fail-closed**：任何沒有明示自己是 `/mcp` 的
+#: `Identity.entry` 的預設值＝**fail-closed**：任何沒有明示自己是後端入口的
 #: 建構點一律算 `rest`，於是 `mcp_only=True` 的寫入型工具對它永遠不可見。
-#: ⛔ 不得改成 `"mcp"`——那會讓「忘了設」變成「預設拿到寫入權」。
+#: ⛔ 不得改成 `"mcp"`／`"dialogue"`——那會讓「忘了設」變成「預設拿到寫入權」。
 DEFAULT_ENTRY_CHANNEL: EntryChannel = "rest"
+
+#: 經「金鑰＋Origin＋`X-JGB-Identity`」三道請求層檢查與命名空間身分進來的入口
+#: （DSP-131）。寫入工具可見性與確認兌現只認這個集合，**唯一判定點是
+#: `is_backend_entry()`**——⛔ 在本檔以外寫 `entry == "mcp"`／`!= "rest"` 之類的字面比較
+#: （稽核 `agent_boundary.py` 會擋）：多一個入口就得逐處改字面，漏一處不是寫入面
+#: 靜默失效，就是對未知值放行。
+BACKEND_ENTRIES: frozenset = frozenset({"mcp", "dialogue"})
+
+
+def is_backend_entry(entry: Any) -> bool:
+    """`entry` 是不是後端入口（`BACKEND_ENTRIES`）。
+
+    白名單判定：只有 `BACKEND_ENTRIES` 內的字串回 True；`"rest"`、`None`、未知值、
+    非字串一律 False（fail-closed）。⛔ 不得改寫成「不是 rest 就放行」。
+    """
+    return isinstance(entry, str) and entry in BACKEND_ENTRIES
 
 # Stage 全序（元件 2 `specs_for`／`ToolRegistry.call` 比較用）；⛔ 唯一定義來源。
 STAGE_ORDER: tuple[Stage, ...] = ("M0", "M1", "M2", "M3", "M4", "M5")
@@ -132,9 +151,10 @@ class Identity:
         audience: 若上游已算好可直接帶入；預設 `None`，由
             `resolved_audience()` 依 `audience_of` 即時推導，⛔ 不在
             建構時強制計算（避免與未來欄位變動時的推導時機耦合）。
-        entry: 呼叫入口（DSP-038-1）。預設 `"rest"`＝fail-closed——只有
-            `/mcp` 門面自己的身分解析（`mcp_facade.parse_identity`／
-            `union_specs` 的探針，屬子切片 W1b）才把它設成 `"mcp"`；
+        entry: 呼叫入口（DSP-038-1；DSP-131）。預設 `"rest"`＝fail-closed——只有
+            後端入口的身分解析（`mcp_facade.parse_identity(entry=...)`，由
+            `resolve_call` 以呼叫端入口明示 `"mcp"` 或 `"dialogue"`；`union_specs`
+            的探針，屬子切片 W1b）才把它設成 `BACKEND_ENTRIES` 內的值；
             `health._PROBE_IDENTITY`、`outline.py`、`tools/agent_eval.py`
             一律**不帶** ⇒ 落 `"rest"`
             ⇒ `mcp_only=True` 的寫入型工具對它們永遠不可見、也呼叫不到。

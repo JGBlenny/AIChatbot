@@ -62,7 +62,7 @@ def _always_exists(_vendor_id):
 async def test_parse_identity_fail_closed_400(raw, code):
     with pytest.raises(F.McpRequestError) as e:
         await F.parse_identity(_headers(raw), key={"id": 7},
-                               vendor_check=_always_exists)
+                               vendor_check=_always_exists, entry="mcp")
     assert (e.value.status, e.value.code) == (400, code)
 
 
@@ -71,7 +71,7 @@ async def test_parse_identity_missing_header_is_400():
     """完全沒帶 X-JGB-Identity 也算解析失敗（⛔ 不得預設出一個身分）。"""
     with pytest.raises(F.McpRequestError) as e:
         await F.parse_identity(_headers(None), key={"id": 7},
-                               vendor_check=_always_exists)
+                               vendor_check=_always_exists, entry="mcp")
     assert e.value.status == 400
 
 
@@ -79,12 +79,12 @@ async def test_parse_identity_missing_header_is_400():
 async def test_parse_identity_normalizes_unknown_target_user_to_tenant():
     ident = await F.parse_identity(
         _headers('{"vendor_id": 1, "session_id": "s1", "target_user": "hacker"}'),
-        key={"id": 7}, vendor_check=_always_exists)
+        key={"id": 7}, vendor_check=_always_exists, entry="mcp")
     assert ident.target_user == "tenant"
     # 正對照組：已知角色不得被改動
     ok = await F.parse_identity(
         _headers('{"vendor_id": 1, "session_id": "s1", "target_user": "prospect"}'),
-        key={"id": 7}, vendor_check=_always_exists)
+        key={"id": 7}, vendor_check=_always_exists, entry="mcp")
     assert ok.target_user == "prospect"
 
 
@@ -97,7 +97,7 @@ async def test_parse_identity_normalizes_unknown_target_user_to_tenant():
 ])
 async def test_parse_identity_mode_normalization(payload, expected):
     ident = await F.parse_identity(_headers(payload), key={"id": 7},
-                                   vendor_check=_always_exists)
+                                   vendor_check=_always_exists, entry="mcp")
     assert ident.mode == expected
 
 
@@ -106,7 +106,7 @@ async def test_parse_identity_unknown_vendor_is_403_and_counted():
     F.reset_premise_stats()
     with pytest.raises(F.McpRequestError) as e:
         await F.parse_identity(_headers('{"vendor_id": 424242, "session_id": "s"}'),
-                               key={"id": 7}, vendor_check=lambda _v: False)
+                               key={"id": 7}, vendor_check=lambda _v: False, entry="mcp")
     assert (e.value.status, e.value.code) == (403, F.ERR_VENDOR_UNKNOWN)
     assert F.premise_stats()["vendor_not_in_table"] == 1
 
@@ -116,11 +116,11 @@ async def test_key_vendor_scope_mismatch_is_403():
     key = {"id": 7, "vendor_ids": [2]}
     with pytest.raises(F.McpRequestError) as e:
         await F.parse_identity(_headers('{"vendor_id": 1, "session_id": "s"}'),
-                               key=key, vendor_check=_always_exists)
+                               key=key, vendor_check=_always_exists, entry="mcp")
     assert (e.value.status, e.value.code) == (403, F.ERR_VENDOR_OUT_OF_KEY_SCOPE)
     # 正對照組：同一把 key 對 vendor 2 應放行
     ident = await F.parse_identity(_headers('{"vendor_id": 2, "session_id": "s"}'),
-                                   key=key, vendor_check=_always_exists)
+                                   key=key, vendor_check=_always_exists, entry="mcp")
     assert ident.vendor_id == 2 and ident.api_key_id == 7
 
 
@@ -129,12 +129,12 @@ async def test_key_vendor_ids_null_means_unrestricted():
     """`vendor_ids IS NULL` ＝ 不限；空陣列 ＝ 全拒（⛔ 兩者不可混用）。"""
     unrestricted = await F.parse_identity(
         _headers('{"vendor_id": 9, "session_id": "s"}'),
-        key={"id": 1, "vendor_ids": None}, vendor_check=_always_exists)
+        key={"id": 1, "vendor_ids": None}, vendor_check=_always_exists, entry="mcp")
     assert unrestricted.vendor_id == 9
     with pytest.raises(F.McpRequestError) as e:
         await F.parse_identity(_headers('{"vendor_id": 9, "session_id": "s"}'),
                                key={"id": 1, "vendor_ids": []},
-                               vendor_check=_always_exists)
+                               vendor_check=_always_exists, entry="mcp")
     assert e.value.code == F.ERR_VENDOR_OUT_OF_KEY_SCOPE
 
 
@@ -142,7 +142,8 @@ async def test_key_vendor_ids_null_means_unrestricted():
 async def test_parse_identity_requires_vendor_check_argument():
     """`vendor_check` 是必填關鍵字——⛔ 不給預設值（預設值等於預設放行）。"""
     with pytest.raises(TypeError):
-        await F.parse_identity(_headers('{"vendor_id": 1, "session_id": "s"}'))
+        # `entry` 照帶（DSP-131 必填），TypeError 才只可能來自缺 `vendor_check`。
+        await F.parse_identity(_headers('{"vendor_id": 1, "session_id": "s"}'), entry="mcp")
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -354,12 +355,12 @@ def test_stamp_metering_context_uses_key_is_internal_not_session_prefix():
     ctx = UsageContext(request_id="r", ts=datetime.now(timezone.utc))
     ident = Identity(vendor_id=1, target_user="tenant", mode="b2c",
                      session_id="backtest_x")
-    F._stamp_metering_context(ctx, ident, is_internal=False, name="kb.get")
+    F._stamp_metering_context(ctx, ident, is_internal=False, name="kb.get", entry="mcp")
     assert ctx.session_id == "backtest_x"
     assert ctx.is_internal is False and ctx.internal_kind is None
     assert ctx.processing_path == "mcp:kb.get"
 
-    F._stamp_metering_context(ctx, ident, is_internal=True, name="kb.get")
+    F._stamp_metering_context(ctx, ident, is_internal=True, name="kb.get", entry="mcp")
     assert ctx.is_internal is True and ctx.internal_kind == "api_key"
 
 
@@ -409,6 +410,10 @@ def test_union_specs_respects_stage_ceiling(monkeypatch):
     （`register()` 對 `scope="write"` 缺它會 raise）＋ `confirmation_token` 在
     `properties` 裡；旗標打開，`union_specs` 的探針自帶 `entry="mcp"`。
     ⛔ 旗標不開的話兩個斷言都會「不可見」而變成恆真，stage 上限根本沒被驗到。
+
+    ⚠️ 寫入改接片 W8：`scope="write"` 的工具只給站內幫手金鑰，而 `union_specs` 的探針身分不帶金鑰 id
+    ⇒ 假工具改成同樣受入口閘與旗標閘管的 `mcp_only=True`＋`scope="read"`（stage 上限的驗法與期望值不變）。
+    寫入工具在探針下不可見另見 `test_write_wiring_req.py`（A6）。
     """
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
     reg = F.build_registry(_deps())
@@ -417,7 +422,7 @@ def test_union_specs_respects_stage_ceiling(monkeypatch):
          "input_schema": {"type": "object",
                           "properties": {"payload": {"type": "object"},
                                          "confirmation_token": {"type": "string"}}},
-         "scope": "write", "mcp_only": True, "stage": {"tenant": "M4"}},
+         "scope": "read", "mcp_only": True, "stage": {"tenant": "M4"}},
         lambda *_a, **_k: None,
     )
     assert "jgb2.action.demo" not in {s["name"] for s in F.union_specs(reg, "M0")}

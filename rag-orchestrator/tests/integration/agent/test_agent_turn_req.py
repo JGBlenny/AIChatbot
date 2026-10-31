@@ -284,7 +284,7 @@ async def test_one_turn_writes_exactly_one_event_with_prompt_tokens(pool, env):
 
     runtime = _make_runtime(pool, [_fake_response(_agent_output(answer="您好。"))])
     deps = _deps(_app(pool, runtime), pool)
-    invoke = F._make_invoke(_registry(deps), deps)
+    invoke = F._make_invoke(_registry(deps), deps, entry="mcp")
     ctx = _FakeCtx({"x-api-key": _PLAIN_KEY_A,
                     "x-jgb-identity": _ident(VENDOR_A, session_id)})
 
@@ -319,7 +319,7 @@ async def test_same_session_id_different_vendor_is_isolated(pool, env):
     runtime_a = _make_runtime(pool, [_fake_response(_agent_output(answer="您好。"))])
     app_a = _app(pool, runtime_a)
     deps_a = _deps(app_a, pool)
-    invoke_a = F._make_invoke(_registry(deps_a), deps_a)
+    invoke_a = F._make_invoke(_registry(deps_a), deps_a, entry="mcp")
     await invoke_a(F.AGENT_TURN_NAME, _FakeCtx(
         {"x-api-key": _PLAIN_KEY_A, "x-jgb-identity": _ident(VENDOR_A, session_id)}),
         {"message": "第一句"})
@@ -352,7 +352,7 @@ async def test_same_session_id_different_vendor_is_isolated(pool, env):
     runtime_b.assembler = _SpyAssembler(runtime_b.assembler)
     app_b = _app(pool, runtime_b)
     deps_b = _deps(app_b, pool)
-    invoke_b = F._make_invoke(_registry(deps_b), deps_b)
+    invoke_b = F._make_invoke(_registry(deps_b), deps_b, entry="mcp")
     await invoke_b(F.AGENT_TURN_NAME, _FakeCtx(
         {"x-api-key": _PLAIN_KEY_B, "x-jgb-identity": _ident(VENDOR_B, session_id)}),
         {"message": "第二句"})
@@ -390,7 +390,7 @@ async def test_two_turns_second_sees_first_turn_state(pool, env):
     runtime = _make_runtime(pool, [_fake_response(_agent_output(answer="您好。"))])
     app = _app(pool, runtime)
     deps = _deps(app, pool)
-    invoke = F._make_invoke(_registry(deps), deps)
+    invoke = F._make_invoke(_registry(deps), deps, entry="mcp")
     ctx = _FakeCtx({"x-api-key": _PLAIN_KEY_A,
                     "x-jgb-identity": _ident(VENDOR_A, session_id)})
 
@@ -435,7 +435,7 @@ async def test_non_prospect_identity_is_no_match(pool, env, target_user, mode):
     session_id = _session()
     runtime = _make_runtime(pool, [])          # ⚠️ 腳本空：被叫到就是紅
     deps = _deps(_app(pool, runtime), pool)
-    invoke = F._make_invoke(_registry(deps), deps)
+    invoke = F._make_invoke(_registry(deps), deps, entry="mcp")
     ctx = _FakeCtx({"x-api-key": _PLAIN_KEY_A,
                     "x-jgb-identity": _ident(VENDOR_A, session_id, target_user, mode)})
 
@@ -460,7 +460,7 @@ async def test_property_manager_identity_is_visible_and_callable(pool, env):
     runtime = _make_runtime(pool, [_fake_response(_agent_output(answer="您好。"))])
     app = _app(pool, runtime, audiences=frozenset({"property_manager"}))
     deps = _deps(app, pool)
-    invoke = F._make_invoke(_registry(deps), deps)
+    invoke = F._make_invoke(_registry(deps), deps, entry="mcp")
     ctx = _FakeCtx({"x-api-key": _PLAIN_KEY_A,
                     "x-jgb-identity": _ident(VENDOR_A, session_id,
                                              "property_manager", "b2b")})
@@ -471,7 +471,7 @@ async def test_property_manager_identity_is_visible_and_callable(pool, env):
     # 反向對照：**同一組接線**下抽掉 pm 大綱 ⇒ `AGENT_UNAVAILABLE`（fail-closed，
     # ⛔ 不回退到 prospect 的售前大綱）——證明上面的成功不是因為門面根本沒判受眾。
     deps_no_outline = _deps(_app(pool, _make_runtime(pool, [])), pool)
-    invoke2 = F._make_invoke(_registry(deps_no_outline), deps_no_outline)
+    invoke2 = F._make_invoke(_registry(deps_no_outline), deps_no_outline, entry="mcp")
     with pytest.raises(Exception) as e:
         await invoke2(F.AGENT_TURN_NAME, _FakeCtx(
             {"x-api-key": _PLAIN_KEY_A,
@@ -487,7 +487,7 @@ async def test_prospect_positive_control(pool, env):
     session_id = _session()
     runtime = _make_runtime(pool, [_fake_response(_agent_output(answer="您好。"))])
     deps = _deps(_app(pool, runtime), pool)
-    invoke = F._make_invoke(_registry(deps), deps)
+    invoke = F._make_invoke(_registry(deps), deps, entry="mcp")
     out = await invoke(F.AGENT_TURN_NAME, _FakeCtx(
         {"x-api-key": _PLAIN_KEY_A, "x-jgb-identity": _ident(VENDOR_A, session_id)}),
         {"message": "你好"})
@@ -511,7 +511,7 @@ async def test_verifier_double_reject_returns_fixed_sentence_without_rejected_te
     }, ensure_ascii=False)
     runtime = _make_runtime(pool, [_fake_response(draft), _fake_response(draft)])
     deps = _deps(_app(pool, runtime), pool)
-    invoke = F._make_invoke(_registry(deps), deps)
+    invoke = F._make_invoke(_registry(deps), deps, entry="mcp")
 
     out = await invoke(F.AGENT_TURN_NAME, _FakeCtx(
         {"x-api-key": _PLAIN_KEY_A, "x-jgb-identity": _ident(VENDOR_A, session_id)}),
@@ -650,7 +650,7 @@ async def test_slots_set_and_get_are_isolated_by_namespaced_identity(pool, env):
     row_key_b = f"mcp:{key_b_id}:{VENDOR_B}:{session_id}"
 
     deps = _deps(_app(pool, _make_runtime(pool, [])), pool)
-    invoke = F._make_invoke(_full_registry(deps), deps)
+    invoke = F._make_invoke(_full_registry(deps), deps, entry="mcp")
     ctx_a = _FakeCtx({"x-api-key": _PLAIN_KEY_A,
                       "x-jgb-identity": _ident(VENDOR_A, session_id)})
     ctx_b = _FakeCtx({"x-api-key": _PLAIN_KEY_B,
@@ -698,7 +698,7 @@ async def test_confirm_token_is_bound_to_the_namespaced_session(pool, env):
     row_key_b = f"mcp:{key_b_id}:{VENDOR_B}:{session_id}"
 
     deps = _deps(_app(pool, _make_runtime(pool, [])), pool)
-    invoke = F._make_invoke(_full_registry(deps), deps)
+    invoke = F._make_invoke(_full_registry(deps), deps, entry="mcp")
     # DSP-038-2：`payload.action` 必填且在封閉值域 `confirm_card.CONFIRM_ACTIONS` 內，
     # 且該 action 的欄位要齊（確認卡由程式依 action＋payload 決定性產出）。
     payload = {"action": "repair_create", "estate_name": "松江路一段 5 號 3F",
@@ -734,7 +734,7 @@ async def test_handoff_tool_is_reachable_through_the_facade(pool, env):
     `{}`／拒絕不是因為整個 registry 沒接起來。"""
     session_id = _session()
     deps = _deps(_app(pool, _make_runtime(pool, [])), pool)
-    invoke = F._make_invoke(_full_registry(deps), deps)
+    invoke = F._make_invoke(_full_registry(deps), deps, entry="mcp")
 
     out = await invoke("handoff.request", _FakeCtx(
         {"x-api-key": _PLAIN_KEY_A, "x-jgb-identity": _ident(VENDOR_A, session_id)}),

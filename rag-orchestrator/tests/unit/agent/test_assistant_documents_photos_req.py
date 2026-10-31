@@ -78,6 +78,12 @@ def _freeze_today(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _assistant_key(monkeypatch):
+    """寫入改接片 W8：寫入工具只給站內幫手金鑰 ⇒ 本檔身分的金鑰 id 列入 `AGENT_ASSISTANT_KEY_IDS`（期望值不變）。"""
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "1")
+
+
+@pytest.fixture(autouse=True)
 def _clean_counts():
     image_fetch.reset_image_count_cap()
     image_fetch.reset_file_count_cap()

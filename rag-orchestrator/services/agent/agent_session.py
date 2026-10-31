@@ -19,7 +19,7 @@ DIALOG_MAX_MESSAGES`）。本檔若去 import 那些模組的常數，會在
 test_agent_session_req.py` 另有一條「與各檔既有常數逐一相等」的正對照守著
 不讓兩邊漂移，⛔ 不是「重複了就沒事」。
 
-## 15 個鍵與六種生命週期（KEY_SPECS，封閉表）
+## 17 個鍵與六種生命週期（KEY_SPECS，封閉表）
 `turn`（每回合覆寫或回合內暫存）／`once`（一次性，用掉即清）／
 `until_scope_exit`（黏到 `scope_exit()`）／`fifo(n)`（FIFO 上限 n）／
 `stamp`（時間戳）／`session`（整個 session 累加，不受回合或範圍影響）。
@@ -84,6 +84,13 @@ WRITE_CANDIDATES_KEY = "write_candidates"
 #: （`runtime.py` 由此 import）。寫點與讀清點、讀回的封閉形狀驗證都在 runtime
 #: （`_image_program_turn` 寫；`run_turn` 在程式段之前讀並清；⛔ 位元組、⛔ 使用者訊息）。
 IMAGE_PICK_PENDING_KEY = "image_pick_pending"
+#: 填欄結構化 S2（`plan-fill-structured-20261030.md`）：意圖呼叫對話紀錄的截點 `{total, cut}`——`total`＝本會話
+#: 累計寫進 `dialog` 的訊息數、`cut`＝最近一次草稿結束時的 `total`（`dialog` 會修剪，⛔ 存列表索引）。
+#: 形狀驗證在 `write_forms.load_fill_cut`。**本鍵的權威定義就在本檔**；`AGENT_FILL_STRUCTURED` off ⛔ 寫。
+FILL_CUT_KEY = "fill_cut"
+#: 填欄結構化 S4：待換請求 `{action, fields, creator}`（只存過 S3 的值、綁建立者、只活一回合）。
+#: 形狀驗證在 `write_forms.load_fill_switch`。**本鍵的權威定義就在本檔**；off ⛔ 寫。
+FILL_SWITCH_KEY = "fill_switch"
 
 #: DSP-022：`dialog` 保留的訊息數上限（user＋assistant 各一則算 2；10 輪對話）。
 DIALOG_MAX_MESSAGES = 20
@@ -126,9 +133,13 @@ KEY_SPECS: dict[str, KeySpec] = {
     # UD 修復 r1（SR-8）：一次性（沿用既有六種之一，⛔ 新增第七種）——下一回合在程式段之前
     # 讀出即清；另以 `expires_at`（`time.time()`＋1800 秒）作廢。
     IMAGE_PICK_PENDING_KEY: KeySpec(IMAGE_PICK_PENDING_KEY, Lifetime.ONCE),
+    # 填欄結構化 S2：整個會話（⛔ 隨 `scope_exit()` 清——`scope_exit` 本身就是設截點的事件，清掉會丟掉累計數）。
+    FILL_CUT_KEY: KeySpec(FILL_CUT_KEY, Lifetime.SESSION),
+    # 填欄結構化 S4：一次性（下一回合開頭讀出即清，`take_fill_switch`）。
+    FILL_SWITCH_KEY: KeySpec(FILL_SWITCH_KEY, Lifetime.ONCE),
 }
 
-assert len(KEY_SPECS) == 15, "KEY_SPECS 是封閉表——15 個鍵，多一個少一個都要回頭對帳"
+assert len(KEY_SPECS) == 17, "KEY_SPECS 是封閉表——17 個鍵，多一個少一個都要回頭對帳"
 
 
 class AgentSession:
@@ -252,6 +263,20 @@ class AgentSession:
 
     def take_image_pick_pending(self) -> Any:
         return self._state.pop(IMAGE_PICK_PENDING_KEY, None)
+
+    # ── fill_cut／fill_switch（填欄結構化；形狀驗證在 `write_forms.load_fill_cut`／`load_fill_switch`，
+    #    本類別只管落地——⛔ 不做任何業務判定；`AGENT_FILL_STRUCTURED` off 的路徑 ⛔ 呼叫寫入）──
+    def get_fill_cut(self) -> Any:
+        return self._state.get(FILL_CUT_KEY)
+
+    def write_fill_cut(self, value: dict) -> None:
+        self._state[FILL_CUT_KEY] = value
+
+    def write_fill_switch(self, entry: dict) -> None:
+        self._state[FILL_SWITCH_KEY] = entry
+
+    def take_fill_switch(self) -> Any:
+        return self._state.pop(FILL_SWITCH_KEY, None)
 
     # ── document_carry（站內幫手 S3／DSP-076：一次性文件暫存）─────────────────
     #    封閉四欄：`action`（動作名）、`typed_fields`（`[[欄位, 有型別值], …]`）、
@@ -462,6 +487,8 @@ __all__ = [
     "LAST_SUBMITTED_KEY",
     "WRITE_CANDIDATES_KEY",
     "IMAGE_PICK_PENDING_KEY",
+    "FILL_CUT_KEY",
+    "FILL_SWITCH_KEY",
     "DOCUMENT_CARRY_FIELDS",
     "DOCUMENT_CARRY_MAX_TURNS",
     "DIALOG_MAX_MESSAGES",

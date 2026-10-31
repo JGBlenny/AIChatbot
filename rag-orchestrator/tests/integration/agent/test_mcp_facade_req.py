@@ -363,7 +363,7 @@ async def test_one_tool_call_writes_exactly_one_usage_event(pool, monkeypatch):
     assert await _count_events(pool, session_id) == 0, "起跑前該 session 就有事件——區間不乾淨"
 
     deps = F.FacadeDeps(get_db_pool=lambda: pool)
-    invoke = F._make_invoke(_stub_registry(), deps)
+    invoke = F._make_invoke(_stub_registry(), deps, entry="mcp")
     ctx = _FakeCtx({"x-api-key": _PLAIN_KEY, "x-jgb-identity": _ident(session_id=session_id)})
 
     out = await invoke("kb.get", ctx, {"kb_id": "1"})
@@ -379,7 +379,7 @@ async def test_failed_tool_call_also_writes_exactly_one_event(pool, monkeypatch)
     session_id = _SESSION_PREFIX + uuid.uuid4().hex[:12]
 
     deps = F.FacadeDeps(get_db_pool=lambda: pool)
-    invoke = F._make_invoke(_stub_registry(), deps)
+    invoke = F._make_invoke(_stub_registry(), deps, entry="mcp")
     ctx = _FakeCtx({"x-api-key": _PLAIN_KEY, "x-jgb-identity": _ident(session_id=session_id)})
 
     with pytest.raises(Exception) as e:      # 未註冊的工具名 ⇒ NO_MATCH ⇒ ToolError
@@ -398,7 +398,7 @@ async def test_backtest_session_prefix_is_still_metered_on_mcp(pool, monkeypatch
     assert session_id.startswith("backtest_"), "本測試的前提就是這個前綴"
 
     deps = F.FacadeDeps(get_db_pool=lambda: pool)
-    invoke = F._make_invoke(_stub_registry(), deps)
+    invoke = F._make_invoke(_stub_registry(), deps, entry="mcp")
     ctx = _FakeCtx({"x-api-key": _PLAIN_KEY, "x-jgb-identity": _ident(session_id=session_id)})
     await invoke("kb.get", ctx, {"kb_id": "1"})
     assert await _wait_for_events(pool, session_id, 1) == 1
@@ -421,7 +421,7 @@ async def test_internal_api_key_marks_traffic_internal(pool, monkeypatch):
     session_id = _SESSION_PREFIX + uuid.uuid4().hex[:12]
     try:
         deps = F.FacadeDeps(get_db_pool=lambda: pool)
-        invoke = F._make_invoke(_stub_registry(), deps)
+        invoke = F._make_invoke(_stub_registry(), deps, entry="mcp")
         ctx = _FakeCtx({"x-api-key": _PLAIN_KEY,
                         "x-jgb-identity": _ident(session_id=session_id)})
         await invoke("kb.get", ctx, {"kb_id": "1"})
@@ -443,7 +443,7 @@ async def test_metering_disabled_refuses_service(pool, monkeypatch):
     session_id = _SESSION_PREFIX + uuid.uuid4().hex[:12]
 
     deps = F.FacadeDeps(get_db_pool=lambda: pool)
-    invoke = F._make_invoke(_stub_registry(), deps)
+    invoke = F._make_invoke(_stub_registry(), deps, entry="mcp")
     ctx = _FakeCtx({"x-api-key": _PLAIN_KEY, "x-jgb-identity": _ident(session_id=session_id)})
     with pytest.raises(Exception) as e:
         await invoke("kb.get", ctx, {"kb_id": "1"})

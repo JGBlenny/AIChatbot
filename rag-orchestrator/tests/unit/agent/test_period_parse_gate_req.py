@@ -58,6 +58,7 @@ def _freeze_today(monkeypatch):
     monkeypatch.setattr(_bills, "_today", lambda: TODAY)
     monkeypatch.delenv("AGENT_WRITE_DRAFT", raising=False)
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "1")   # 寫入改接片 W8：身分的金鑰 id 列入（期望值不變）
 
 
 @pytest.fixture()

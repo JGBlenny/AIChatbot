@@ -962,8 +962,7 @@ async def missing_name_lenient(
         return None                                   # 開關值不合法（啟動時已拒）⇒ 不觸發
     if not isinstance(action, str) or not isinstance(payload, dict):
         return None
-    if (action in WRITE_NOT_SUPPORTED_ACTIONS
-            and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+    if _write_not_supported(action):
         return None                                   # 同 `write_name_candidates`
     target = _missing_name_target(action, payload, labels, name_lenient.reask_key)
     if target is None:
@@ -1284,6 +1283,17 @@ def _pick_note_code(said: dict) -> Optional[str]:
     return None
 
 
+def _fs_amount_pick_buttons(said: Any) -> bool:
+    """填欄結構化 N1（plan-fill-structured-20261030 S3「選定紀錄的欄」、§9 Q8）：`AGENT_FILL_STRUCTURED` on 且客人講了
+    金額（`said_amount`）⇒ 收斂成單筆也出候選按鈕、由客人按（DSP-091「已選定的那筆紀錄」歸程式）。
+    off（含未設）⇒ `False`＝現行「剩 1 張就出卡」。開關值不合法已在建構期失敗；這裡讀到不合法一律當 off。"""
+    try:
+        on = _write_forms.fill_structured_enabled_from_env()
+    except ValueError:
+        return False
+    return on and isinstance(said, dict) and said.get("amount") is not None
+
+
 async def _pr_resolve_bill(
     identity: Identity, action: Any, payload: dict, *, today: date,
     program_pick: Optional[dict], said: dict,
@@ -1348,7 +1358,7 @@ async def _pr_resolve_bill(
     query = name if not (isinstance(period_text, str) and period_text.strip()) else (
         f"{name} {period_text.strip()}")
     estate_id = estate.get("id")
-    if len(kept) == 1 and not more:
+    if len(kept) == 1 and not more and not _fs_amount_pick_buttons(said):
         if _fill_bill_fields(payload, kept[0], today=today):
             return True, None, kept[0], estate
         return False, None, kept[0], estate       # 算不出卡 ⇒ 交回 render（同現行）
@@ -1995,8 +2005,7 @@ async def closed_action_missing_labels(identity: Identity, action: Any, payload:
     if not isinstance(payload, dict):
         return []
     try:
-        if (action in WRITE_NOT_SUPPORTED_ACTIONS
-                and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+        if _write_not_supported(action):
             return []
         early, _estate_id, _scope = await _prepare_closed_action(
             identity, action, copy.deepcopy(dict(payload)))
@@ -2026,6 +2035,19 @@ _WRITE_NOT_SUPPORTED_TEXTS: Final[dict] = {BILL_DUE_EXTEND_ACTION: BILL_DUE_EXTE
 REPAIR_PHOTOS_NOT_ATTACHABLE_HINT = (
     "提醒：目前連到 JGB 正式系統，修繕單還不能附上照片。按確認後只會建立文字內容的修繕單，這次的照片不會送出。"
 )
+
+
+def write_wiring_on() -> bool:
+    """寫入改接片 W1：`JGBSystemAPI.write_wiring` 恰為 `True` 才算 on（缺屬性的測試替身、非布林 ⇒ off）。"""
+    return getattr(jgb2_tools._get_api(), "write_wiring", False) is True
+
+
+def _write_not_supported(action: Any) -> bool:
+    """出卡前「尚未開放」的判斷（W5）：屬 `WRITE_NOT_SUPPORTED_ACTIONS`、接真 JGB（`use_mock is False`），
+    且寫入改接開關 off。on ⇒ 四個動作照常出卡、兌現時送真 JGB；off 與改動前逐字相同。"""
+    return (action in WRITE_NOT_SUPPORTED_ACTIONS
+            and getattr(jgb2_tools._get_api(), "use_mock", True) is False
+            and not write_wiring_on())
 
 
 def _write_not_supported_result(action: Any = None) -> ToolResult:
@@ -2227,8 +2249,7 @@ async def name_early_lookup(
         return None                                   # 開關值不合法（啟動時已拒）⇒ 不觸發
     if not isinstance(action, str) or action not in _NAME_EARLY_ACTIONS or not isinstance(payload, dict):
         return None
-    if (action in WRITE_NOT_SUPPORTED_ACTIONS
-            and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+    if _write_not_supported(action):
         return None                                   # 同 (乙)：接真 JGB 不支援的動作 ⇒ 0 次查詢
     if not isinstance(labels, list) or not labels:
         return None                                   # 缺欄為空 ⇒ 現行出卡路徑本來就會解析名稱
@@ -2367,8 +2388,7 @@ async def write_name_candidates(identity: Identity, action: Any, payload: Any, *
     """
     if not isinstance(action, str) or action not in _wc.CANDIDATE_ACTIONS or not isinstance(payload, dict):
         return None
-    if (action in WRITE_NOT_SUPPORTED_ACTIONS
-            and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+    if _write_not_supported(action):
         return None                                   # 接真 JGB 不支援的動作 ⇒ 0 次查詢（出卡端固定句收尾）
     work = copy.deepcopy(dict(payload))
     work["action"] = action
@@ -2384,8 +2404,7 @@ async def write_name_candidates(identity: Identity, action: Any, payload: Any, *
                 name_lenient=name_lenient)
             return _name_resolution_early(early, name_lenient)
         if action in CLOSED_ACTION_FIELDS:
-            if (action in WRITE_NOT_SUPPORTED_ACTIONS
-                    and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+            if _write_not_supported(action):
                 return None
             early, _eid, _scope = await _prepare_closed_action(
                 identity, action, work, candidates=True, name_lenient=name_lenient)
@@ -2547,9 +2566,8 @@ async def confirm_request(
         if not pr_on:
             said = {"amount": None, "range": None}
     # 接真 JGB 時新動作端點尚未開放 ⇒ 出卡前就停（真 `JGBSystemAPI`
-    # 一定有 `use_mock`；沒有這個屬性的是測試替身 ⇒ 沿用原行為）。
-    if (action in WRITE_NOT_SUPPORTED_ACTIONS
-            and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+    # 一定有 `use_mock`；沒有這個屬性的是測試替身 ⇒ 沿用原行為）。寫入改接開關 on ⇒ 不停（W5）。
+    if _write_not_supported(action):
         return _write_not_supported_result(action)
     # 5 支寫入動作的缺欄計算一律走 `write_forms.missing_labels`、在 `render()`
     # **之前**；缺 ⇒ 回缺欄清單、由程式追問（⛔ 出卡）。封閉三動作的呼叫點**不動**——仍在
@@ -2725,8 +2743,10 @@ async def confirm_request(
     if matched_by_period and not hint:
         hint = BILL_MATCH_HINT
     # 接真 JGB 的修繕單附了照片 ⇒ 卡外提醒「照片這次不會送出」（卡與兩把雜湊不動；`hint` 本來就在卡外）。
+    # 寫入改接開關 on ⇒ 照片以 multipart 送出，不提醒（W2）。
     if (action == _REPAIR_CREATE_ACTION
             and getattr(jgb2_tools._get_api(), "use_mock", True) is False
+            and not write_wiring_on()
             and (_confirm_card.repair_photos_of(payload) or payload.get("broken_photos_omitted"))):
         hint = f"{hint}\n{REPAIR_PHOTOS_NOT_ATTACHABLE_HINT}" if hint else REPAIR_PHOTOS_NOT_ATTACHABLE_HINT
 

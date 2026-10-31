@@ -41,6 +41,10 @@ from services.agent.confirm_card import (
     ESTATE_CREATE_ACTION,
     MANUAL_BILL_CREATE_ACTION,
     PHOTOS_UNAVAILABLE_KEY,
+    WRITE_RESULT_FAILED,
+    WRITE_RESULT_KEY,
+    WRITE_RESULT_TEXTS,
+    WRITE_RESULT_UNCONFIRMED,
     ConfirmCardError,
     category_name_of,
     closed_body,
@@ -226,6 +230,33 @@ def _invalid_input() -> ToolResult:
     return ToolResult(ok=False, error="INVALID_INPUT")
 
 
+def _wiring_on(api: Any) -> bool:
+    """寫入改接片 W1：`JGBSystemAPI.write_wiring` 恰為 `True` 才算 on（缺屬性、非布林 ⇒ off，fail-closed）。"""
+    return getattr(api, "write_wiring", False) is True
+
+
+def _write_failed(api: Any, resp: Any, action: str) -> ToolResult:
+    """寫入呼叫之後的失敗（下游未成功，或說成功卻缺編號）。
+
+    off ⇒ 與改動前逐字相同（`_no_match()`）。on（W6／W7）⇒ 同一個錯誤碼 `NO_MATCH`，另在
+    `data[WRITE_RESULT_KEY]` 放封閉錯誤碼，runtime 依它查 `confirm_card.WRITE_RESULT_TEXTS`：
+    - 回應是成功外殼卻缺 `data.id` ⇒ `unconfirmed`（JGB 可能已建立）；
+    - transport 已分類（`error.reason` 在封閉值域內）⇒ 該碼；
+    - 其他（沒送出：降級回應、端點未開、`bill_id` 非數字）⇒ `failed`。
+    ⛔ 讀 `error.message`（JGB 原文不進錯誤碼、不進 log、不進模型）。"""
+    if not _wiring_on(api):
+        return _no_match()
+    code = WRITE_RESULT_FAILED
+    if isinstance(resp, dict) and resp.get("success") is True:
+        code = WRITE_RESULT_UNCONFIRMED
+    elif isinstance(resp, dict) and isinstance(resp.get("error"), dict):
+        reason = resp["error"].get("reason")
+        if isinstance(reason, str) and reason in WRITE_RESULT_TEXTS:
+            code = reason
+    logger.warning("[agent] %s 寫入未完成 ⇒ %s", action, code)
+    return ToolResult(ok=False, error="NO_MATCH", data={WRITE_RESULT_KEY: code})
+
+
 def _receipt(receipt: dict, text_for_model: str) -> ToolResult:
     """成功回傳的唯一形狀：`data={"receipt": {...}}`。
 
@@ -380,9 +411,24 @@ async def bill_due_extend(identity: Identity, args: dict) -> ToolResult:
     if not (resp or {}).get("success"):
         # 誠實回錯：⛔ 不重試、⛔ 不把下游訊息轉給模型（Runtime 會用固定句回覆）。
         logger.warning("[agent] bill_due_extend 下游寫入未成功")
-        return _no_match()
+        return _write_failed(api, resp, BILL_DUE_EXTEND_ACTION)
 
     data = resp.get("data") if isinstance(resp.get("data"), dict) else {}
+    if _wiring_on(api):
+        # 寫入改接片 §3：staging `544e8592eb` `BillController::updateDueDate` 成功回
+        # `formatBill(Bill::find(id))`——`id`、`date_expire`（整數 YYYYMMDD），**沒有** `due_date_before`。
+        # 缺 `data.id` ⇒ 結果未確認（W7）；`before` 取卡上值、`after` 取回應的 `date_expire`，對不上用卡上值。
+        wired_bill_id = _scalar(data.get("id"))
+        if not wired_bill_id:
+            return _write_failed(api, {"success": True}, BILL_DUE_EXTEND_ACTION)
+        return _receipt(
+            {
+                "bill_id": wired_bill_id,
+                "before": _iso_date(payload.get("date_expire_before")),
+                "after": _iso_date(data.get("date_expire")) or after_iso,
+            },
+            "帳單到期日已更新。",
+        )
     return _receipt(
         {
             "bill_id": _scalar(data.get("id")) or bill_id,
@@ -512,7 +558,10 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
     broken_photos = repair_photos_of(payload)
     # 接真 JGB：照片本體與中繼資料都不送（JGB 的 `broken_photos` 只收 URL；卡外提醒已在出卡時告知），
     # 所以也不必驗暫存裡的照片位元組——否則暫存過期會對一張本來就不附照片的單回「請重新上傳」。
-    if broken_photos and getattr(jgb2_tools._get_api(), "use_mock", True) is not False:
+    # 寫入改接片 W2：開關 on ⇒ 照片本體以 multipart 送真 JGB（staging `RepairController::store` 收
+    # `broken_photos[]` 檔案），所以 on 也要驗暫存位元組；off 與改動前逐字相同。
+    if broken_photos and (getattr(jgb2_tools._get_api(), "use_mock", True) is not False
+                          or _wiring_on(jgb2_tools._get_api())):
         photo_files = _card_photo_files(identity, broken_photos)
         if photo_files is None:
             logger.warning("[agent] repair_create 卡上照片不可用（暫存缺或 sha256 不符）⇒ 不寫入")
@@ -574,14 +623,16 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
     )
     if not (resp or {}).get("success"):
         logger.warning("[agent] repair_create 下游寫入未成功")
-        return _no_match()
+        return _write_failed(api, resp, REPAIR_CREATE_ACTION)
 
+    # 寫入改接片 §3：staging `544e8592eb` `RepairController::store` 成功回 `formatRepair(Repair::find(id))`
+    # （`id`、`created_at`），與既有解析相同。
     data = resp.get("data") if isinstance(resp.get("data"), dict) else {}
     repair_id = _scalar(data.get("id"))
     if not repair_id:
-        # 下游說成功卻沒給單號：⛔ 不編一個，也 ⛔ 不宣稱成功。
+        # 下游說成功卻沒給單號：⛔ 不編一個，也 ⛔ 不宣稱成功（on ⇒ 結果未確認，W7）。
         logger.warning("[agent] repair_create 下游回應缺單號")
-        return _no_match()
+        return _write_failed(api, resp, REPAIR_CREATE_ACTION)
     return _receipt(
         {
             "repair_id": repair_id,
@@ -693,10 +744,11 @@ async def estate_create(identity: Identity, args: dict) -> ToolResult:
         role_id, user_id, closed_body(ESTATE_CREATE_ACTION, payload),
         idempotency_key=args.get("confirmation_token"),
     )
+    # 寫入改接片 §3：staging `544e8592eb` `EstateController::store` 成功回 `formatEstate`（`id`）。
     estate_id = _created_id(resp)
     if not estate_id:
         logger.warning("[agent] estate_create 下游寫入未成功或缺編號")
-        return _no_match()
+        return _write_failed(api, resp, ESTATE_CREATE_ACTION)
     return _receipt({"estate_id": estate_id}, "物件已建立。")
 
 
@@ -722,10 +774,11 @@ async def contract_create(identity: Identity, args: dict) -> ToolResult:
     resp = await api.assistant_create_contract(
         role_id, user_id, body, idempotency_key=args.get("confirmation_token"),
     )
+    # 寫入改接片 §3：staging `544e8592eb` `ContractController::store` 成功回 `formatContract`（`id`）。
     contract_id = _created_id(resp)
     if not contract_id:
         logger.warning("[agent] contract_create 下游寫入未成功或缺編號")
-        return _no_match()
+        return _write_failed(api, resp, CONTRACT_CREATE_ACTION)
     return _receipt({"contract_id": contract_id, "estate_id": _scalar(body["estate_id"])},
                     "合約已建立。")
 
@@ -752,10 +805,12 @@ async def manual_bill_create(identity: Identity, args: dict) -> ToolResult:
     resp = await api.assistant_create_bill(
         role_id, user_id, body, idempotency_key=args.get("confirmation_token"),
     )
+    # 寫入改接片 §3：staging `544e8592eb` `BillController::storeManual` 成功回
+    # `formatBill(Bill::find(id))`（`id`）。
     bill_id = _created_id(resp)
     if not bill_id:
         logger.warning("[agent] manual_bill_create 下游寫入未成功或缺編號")
-        return _no_match()
+        return _write_failed(api, resp, MANUAL_BILL_CREATE_ACTION)
     return _receipt({"bill_id": bill_id, "contract_id": _scalar(body["contract_id"])},
                     "手動帳單已建立。")
 

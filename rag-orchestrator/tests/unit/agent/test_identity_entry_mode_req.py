@@ -96,7 +96,7 @@ async def test_mcp_prospect_list_shape_normalizes_and_counts():
     """
     payload = json.dumps({"vendor_id": 1, "session_id": "s", "target_user": ["prospect"]})
     ident = await F.parse_identity(_headers(payload), key={"id": 7},
-                                   vendor_check=_always_exists)
+                                   vendor_check=_always_exists, entry="mcp")
     assert ident.target_user == "prospect"
     assert ident.mode == "b2b"
     assert F._STATS.identity_mode_normalized == 1
@@ -106,7 +106,7 @@ async def test_mcp_prospect_explicit_b2c_is_normalized_and_counted():
     payload = json.dumps({"vendor_id": 1, "session_id": "s",
                           "target_user": "prospect", "mode": "b2c"})
     ident = await F.parse_identity(_headers(payload), key={"id": 7},
-                                   vendor_check=_always_exists)
+                                   vendor_check=_always_exists, entry="mcp")
     assert (ident.target_user, ident.mode) == ("prospect", "b2b")
     assert F._STATS.identity_mode_normalized == 1
 
@@ -116,7 +116,7 @@ async def test_mcp_prospect_explicit_b2b_is_not_counted():
     payload = json.dumps({"vendor_id": 1, "session_id": "s",
                           "target_user": "prospect", "mode": "b2b"})
     ident = await F.parse_identity(_headers(payload), key={"id": 7},
-                                   vendor_check=_always_exists)
+                                   vendor_check=_always_exists, entry="mcp")
     assert ident.mode == "b2b"
     assert F._STATS.identity_mode_normalized == 0
 
@@ -125,7 +125,7 @@ async def test_mcp_unknown_target_user_is_tenant_b2c_and_not_counted():
     """正對照：`"Prospect"` 不是已知值 ⇒ `_normalize_target_user` 落 tenant、mode 留 b2c。"""
     payload = json.dumps({"vendor_id": 1, "session_id": "s", "target_user": "Prospect"})
     ident = await F.parse_identity(_headers(payload), key={"id": 7},
-                                   vendor_check=_always_exists)
+                                   vendor_check=_always_exists, entry="mcp")
     assert (ident.target_user, ident.mode) == ("tenant", "b2c")
     assert F._STATS.identity_mode_normalized == 0
 
@@ -135,7 +135,7 @@ async def test_mcp_unknown_target_user_is_tenant_b2c_and_not_counted():
 # ---------------------------------------------------------------------------
 async def test_premise_stats_exposes_the_same_key():
     payload = json.dumps({"vendor_id": 1, "session_id": "s", "target_user": "prospect"})
-    await F.parse_identity(_headers(payload), key={"id": 7}, vendor_check=_always_exists)
+    await F.parse_identity(_headers(payload), key={"id": 7}, vendor_check=_always_exists, entry="mcp")
     assert F.premise_stats()["identity_mode_normalized"] == 1
 
 

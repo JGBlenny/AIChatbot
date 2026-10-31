@@ -662,7 +662,9 @@ def _patch_metering(monkeypatch):
 
 
 def _patch_resolve_call(monkeypatch, *, identity=None):
-    async def _resolve(headers, pool, allowed_origins=None):
+    async def _resolve(headers, pool, allowed_origins=None, *, entry):
+        # DSP-131：`entry` 是 `resolve_call` 的必填關鍵字——替身照收（⛔ 給預設值），
+        # `_invoke` 沒傳就會在這裡當場 TypeError。
         return F.ResolvedCall(identity=identity or _identity(), api_key_id=API_KEY_ID,
                               is_internal=False)
 
@@ -680,7 +682,7 @@ async def test_hourly_cap_returns_rate_limited(monkeypatch):
     engine = FakeEngine()
     runtime = _runtime(FakeProvider([_final_response(answer="好的。")] * 4))
     deps = _deps(_app(runtime=runtime, engine=engine))
-    invoke = F._make_invoke(_registry_with_agent_turn(deps), deps)
+    invoke = F._make_invoke(_registry_with_agent_turn(deps), deps, entry="mcp")
     ctx = SimpleNamespace(headers={})
 
     # 正對照組：上限內的兩次都成功
@@ -705,7 +707,7 @@ async def test_missing_runtime_is_agent_unavailable(monkeypatch):
 
     engine = FakeEngine()
     deps = _deps(_app(engine=engine))          # ⚠️ 沒有 app.state.agent_runtime
-    invoke = F._make_invoke(_registry_with_agent_turn(deps), deps)
+    invoke = F._make_invoke(_registry_with_agent_turn(deps), deps, entry="mcp")
 
     with pytest.raises(Exception) as e:
         await invoke(F.AGENT_TURN_NAME, SimpleNamespace(headers={}), {"message": "問題"})
@@ -954,7 +956,7 @@ async def test_invisible_identity_gets_no_match_not_agent_unavailable(monkeypatc
 
     engine = FakeEngine()
     deps = _deps(_app(engine=engine))          # ⚠️ 沒有 agent_runtime
-    invoke = F._make_invoke(_registry_with_agent_turn(deps), deps)
+    invoke = F._make_invoke(_registry_with_agent_turn(deps), deps, entry="mcp")
 
     with pytest.raises(Exception) as e:
         await invoke(F.AGENT_TURN_NAME, SimpleNamespace(headers={}), {"message": "問題"})
@@ -1006,7 +1008,7 @@ async def test_invoke_hands_tools_a_namespaced_identity(monkeypatch):
         lambda identity, args: _ok_result(),
     )
     deps = _deps(_app())
-    invoke = F._make_invoke(registry, deps)
+    invoke = F._make_invoke(registry, deps, entry="mcp")
 
     await invoke("probe.read", SimpleNamespace(headers={}), {})
 
@@ -1040,7 +1042,7 @@ async def test_invoke_does_not_double_prefix_agent_turn(monkeypatch):
     deps = _deps(_app(runtime=runtime, engine=engine))
     registry = _SpyRegistry()
     registry.register(F.AGENT_TURN_SPEC, F._make_agent_turn(deps))
-    invoke = F._make_invoke(registry, deps)
+    invoke = F._make_invoke(registry, deps, entry="mcp")
 
     await invoke(F.AGENT_TURN_NAME, SimpleNamespace(headers={}), {"message": "問題"})
 

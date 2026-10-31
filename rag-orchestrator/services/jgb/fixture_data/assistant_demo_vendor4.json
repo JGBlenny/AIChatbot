@@ -27847,11 +27847,10 @@
     "path": "/api/external/v1/repairs",
     "photo_policy": {
      "max_count": 5,
-     "max_bytes": 5242880,
+     "max_bytes": 5000000,
      "content_types": [
       "image/jpeg",
-      "image/png",
-      "image/webp"
+      "image/png"
      ]
     }
    }

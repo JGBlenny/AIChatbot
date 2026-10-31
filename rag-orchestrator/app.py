@@ -32,6 +32,7 @@ from routers import platform_sop  # ⚠️ 平台管理員的 SOP 範本後台 C
 #    `/vendors/{id}/sop/copy-category/{platform_category_id}` 也要平台分類存在才有得複製。
 from routers import ocr_mapping  # documind-ocr-mapping：DocuMind OCR → JGB 欄位草稿（同步端點）
 from routers import agent as agent_router  # agentic-mcp-orchestration 1.8：/api/v1/agent/openapi.json・/health
+from routers import agent_dialogue as agent_dialogue_router  # DSP-131 專用對話 API
 from routers import agent_uploads as agent_uploads_router  # UD-1：瀏覽器直傳 POST /api/v1/agent/uploads
 from services.agent import upload_store as _upload_store
 
@@ -558,6 +559,9 @@ else:
     app.state.mcp_server = None
     print(f"⚠️ [mcp] MCP SDK 不可用（{_mcp_sdk_reason}）→ /mcp 工具面未掛載；"
           f"服務層閘仍生效（缺／錯 X-API-Key 一律 401）")
+# DSP-131 專用對話 API：不受 SDK 可用性左右（router 不 import mcp）。必須用上面同一份
+# _mcp_registry／_mcp_deps——每分鐘上限掛在 registry 實例上，另建一份等於兩入口各算各的。
+app.include_router(agent_dialogue_router.build_router(_mcp_registry, _mcp_deps))
 
 
 # 註冊路由

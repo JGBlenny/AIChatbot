@@ -125,10 +125,12 @@ from pydantic import BaseModel
 from services.agent import image_fetch
 from services.agent import upload_store
 from services.agent.identity import (
+    BACKEND_ENTRIES,
     DEFAULT_ENTRY_MODE,
     ENTRY_MODES,
     Identity,
     Stage,
+    is_backend_entry,
     normalize_entry_mode,
 )
 from services.agent.limits import LIMITS
@@ -206,6 +208,74 @@ ERR_METERING = "METERING_UNAVAILABLE"
 #: 任一缺席（2.2 尚未接線、或啟動時 `bootstrap.build_runtime` 失敗）⇒ 回這個碼。
 #: ⛔ 不退化成「就地建一個 runtime」——那會繞過 `build_runtime` 的 Verifier 自證。
 ERR_AGENT_UNAVAILABLE = "AGENT_UNAVAILABLE"
+
+
+class FacadeCallError(Exception):
+    """`_invoke` 的結構化失敗（DSP-131）：`code`、`status`、`detail`。
+
+    兩個入口共用同一個 `_invoke`，各自轉成自己的對外形狀：
+    - `/mcp`：`build_mcp_server` 的包裝層轉回 SDK 的 `ToolError(str(err))`——
+      `str(err)` 就是改版前 `tool_error(...)` 的訊息，**逐字不變**
+      （有 detail ⇒ `f"{message}: {detail}"`，否則 `message`）。
+    - 對話 API：`routers/agent_dialogue.py` 依 `status` 回 HTTP，body
+      `{"code", "detail"?}`。
+
+    ⛔ `detail` 只放封閉值域或本系統自己寫的固定說明（`INPUT_DETAIL_KEY` 的值），
+    ⛔ 不放例外文字、SQL、身分或使用者原文。非預期例外 ⛔ 包成本型別——
+    照舊往上拋，由各入口回固定 500。
+    """
+
+    def __init__(self, code: str, status: int, detail: Optional[str] = None) -> None:
+        self.code = code
+        self.status = status
+        self.detail = detail
+        super().__init__(f"{code}: {detail}" if detail else code)
+
+
+#: 對話 API 的 code → HTTP 狀態（計畫 `plan-dialogue-api-20261031.md` §5.1；**唯一定義來源**）。
+#: 請求層錯誤（`McpRequestError`）沿用它自己的 `status`，與本表一致；
+#: ⛔ 不在表內的 code 一律 500（`dialogue_status_for`）。
+DIALOGUE_STATUS_BY_CODE: dict = {
+    ERR_IDENTITY_MALFORMED: 400,
+    ERR_IDENTITY_NO_VENDOR: 400,
+    ERR_IDENTITY_NO_SESSION: 400,
+    ERR_IDENTITY_NO_USER: 400,
+    ERR_API_KEY: 401,
+    ERR_ORIGIN: 403,
+    ERR_VENDOR_UNKNOWN: 403,
+    ERR_VENDOR_OUT_OF_KEY_SCOPE: 403,
+    "INVALID_INPUT": 400,
+    "NO_MATCH": 404,
+    "RATE_LIMITED": 429,
+    ERR_QUOTA: 429,
+    ERR_AGENT_UNAVAILABLE: 503,
+    ERR_METERING: 503,
+    "TOOL_TIMEOUT": 504,
+    "CONFIRMATION_REQUIRED": 409,
+}
+
+#: 表外與非預期失敗的固定 code（對話 API 回 500，⛔ 帶例外文字）。
+DIALOGUE_INTERNAL_ERROR = "INTERNAL_ERROR"
+
+
+def dialogue_status_for(code: Optional[str]) -> int:
+    """code → HTTP 狀態；表外（含 None）一律 500。"""
+    return DIALOGUE_STATUS_BY_CODE.get(code, 500) if isinstance(code, str) else 500
+
+
+#: 專用對話 API 的後端路徑（DSP-131；對外經 nginx 為 `{AICHATBOT_BASE}/v1/agent/...`）。
+#: **唯一定義來源**：router 與 `McpServiceGate` 的被擋流量計數都讀這裡。
+#: ⚠️ 兩條都必須在 `GATED_PREFIXES` 之下、且不得落進上傳免閘路徑（稽核 28 檢查）。
+DIALOGUE_TURN_PATH = "/api/v1/agent/turn"
+DIALOGUE_UPLOAD_TICKET_PATH = "/api/v1/agent/upload-ticket"
+DIALOGUE_PATHS: tuple = (DIALOGUE_TURN_PATH, DIALOGUE_UPLOAD_TICKET_PATH)
+
+#: 對話 API 的請求 body 上限——與 `/mcp` 同上限：MCP SDK 2.1.1
+#: `mcp.server.transport_security.DEFAULT_MAX_REQUEST_BODY_SIZE`（4 MiB），
+#: `build_asgi_app` 未覆寫 ⇒ `/mcp` 超過即 413。單元測試比對兩者相等。
+DIALOGUE_MAX_BODY_BYTES = 4 * 1024 * 1024
+#: 超過上限時對話 API 回 413 的 code（計畫 §5.1 表外；與 SDK 413 同義）。
+DIALOGUE_BODY_TOO_LARGE = "REQUEST_BODY_TOO_LARGE"
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -394,17 +464,36 @@ def _coerce_vendor_id(raw: Any) -> Optional[int]:
     return None
 
 
+def _require_backend_entry(entry: Any) -> str:
+    """`entry` 必須是後端入口（`BACKEND_ENTRIES`）；否則 `ValueError`（程式錯誤，非請求錯誤）。
+
+    DSP-131：`parse_identity`／`resolve_call`／`_make_invoke` 的 `entry` 是**必填
+    關鍵字**，由呼叫端依自己是哪一道門明示。⛔ 不給預設值（預設值會讓新呼叫點
+    靜默拿到某個入口的權限）；⛔ 不接受 `"rest"`、未知值或非字串——這幾個函式產出
+    的身分會帶 `entry` 進寫入工具可見性與確認兌現，填錯就是寫入面的權限錯置。
+    """
+    if not is_backend_entry(entry):
+        raise ValueError(
+            f"entry 必須是後端入口之一 {sorted(BACKEND_ENTRIES)}，收到 {entry!r}"
+        )
+    return entry
+
+
 async def parse_identity(
     headers: Any,
     *,
     key: Optional[Mapping] = None,
     vendor_check: Callable[[int], Any],
+    entry: str,
 ) -> Identity:
     """把 `X-JGB-Identity` header 解析成 `Identity`（fail-closed）。
 
     Args:
         headers: starlette `Headers` 或普通 Mapping（MCP 工具層由
-            `Context.headers` 取得）。
+            `Context.headers` 取得；對話 API 由 request headers 取得）。
+        entry: 呼叫入口（**必填關鍵字**，DSP-131）：`"mcp"`（`/mcp` 門面與
+            `routers/agent.py` 的 MCP 輔助端點）或 `"dialogue"`（專用對話 API）。
+            不在 `BACKEND_ENTRIES` 內 ⇒ `ValueError`，在讀 header 之前就拒。
         key: `verify_api_key()` 回傳的 key 紀錄（`{id, name, is_internal,
             vendor_ids}`）。`vendor_ids` 非 NULL 且不含 header 的 `vendor_id`
             ⇒ 403。`None` 代表尚未驗（僅測試用）。
@@ -415,7 +504,9 @@ async def parse_identity(
     Raises:
         McpRequestError: 400（JSON 不合法／缺 vendor_id／缺 session_id）、
             403（vendor 不存在／不在 key 的 vendor_ids 內）。
+        ValueError: `entry` 不是後端入口（程式錯誤）。
     """
+    entry = _require_backend_entry(entry)
     raw = _header(headers, _IDENTITY_HEADER)
     if not raw:
         raise McpRequestError(400, ERR_IDENTITY_MALFORMED)
@@ -485,14 +576,15 @@ async def parse_identity(
         user_id=user_id,
         session_id=session_id.strip(),
         api_key_id=(key or {}).get("id"),
-        # DSP-038-1／W1b：**唯一**把 `entry` 設成 `"mcp"` 的真身分建構點。
-        # ⛔ 不是由 payload 決定——`entry` 回答的是「從哪一道門進來」，這一行
-        # 之所以能寫 `"mcp"`，是因為本函式只被 `/mcp` 的請求層（`resolve_call`）
-        # 呼叫。`namespaced_identity` 走 `dataclasses.replace` ⇒ 自動繼承；
-        # `_ToolListFilter` 用的也是本函式的結果（經 `resolve_call`）。
-        # 其餘建構點（`health._PROBE_IDENTITY`／`outline.py`／`agent_eval.py`）
-        # 一律不帶 ⇒ 落 `"rest"`（fail-closed）。
-        entry="mcp",
+        # DSP-038-1／W1b；DSP-131：**唯一**把 `entry` 設成後端入口的真身分建構點。
+        # ⛔ 不是由 payload 決定——`entry` 回答的是「從哪一道門進來」，值由呼叫端
+        # 以必填關鍵字明示（`resolve_call(..., entry=...)`：`/mcp` 門面、
+        # `McpServiceGate`、`_ToolListFilter`、`routers/agent.py` 傳 `"mcp"`；
+        # 專用對話 API 的 `_invoke` 傳 `"dialogue"`），且上面已驗必在
+        # `BACKEND_ENTRIES` 內。`namespaced_identity` 走 `dataclasses.replace`
+        # ⇒ 自動繼承。其餘建構點（`health._PROBE_IDENTITY`／`outline.py`／
+        # `agent_eval.py`）一律不帶 ⇒ 落 `"rest"`（fail-closed）。
+        entry=entry,
     )
 
 
@@ -2963,7 +3055,7 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None, *,
         reg.register(stats_spec, _make_stats())
 
     # ── W4：寫入型工具 `jgb2.action.*` ────────────────────────────────────
-    # ⚠️ **一律註冊**，可見性交給 `specs_for` 的兩道閘（入口 `entry=="mcp"` ＋
+    # ⚠️ **一律註冊**，可見性交給 `specs_for` 的兩道閘（入口 `is_backend_entry(entry)` ＋
     #    旗標 `AGENT_WRITE_TOOLS_ENABLED`）。⛔ 不學 `agent.turn` 那樣「旗標關就
     #    不註冊」——那條路的旗是**回切開關**（整條路徑消失），這裡的旗是**可見性
     #    閘**，兩者語義不同：不註冊會讓「旗標翻面不必重建 registry」這條慣例失效，
@@ -3125,36 +3217,67 @@ def _agent_turn_preflight(deps: FacadeDeps, identity: Identity) -> Optional[str]
     return None
 
 
-def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
-    """產生 `_invoke(name, ctx, args)`——三道檢查 ＋ 計量 ＋ registry.call。"""
+#: 各後端入口的計量欄位（DSP-131）。`/mcp` 的值與改版前逐字相同；
+#: 對話 API 用自己的 channel／路徑前綴／answer_source，報表才分得出兩道門。
+#: 欄寬：`usage_events.channel VARCHAR(20)`、`processing_path VARCHAR(60)`、
+#: `answer_source VARCHAR(40)`。鍵集合必須等於 `BACKEND_ENTRIES`（單元測試釘住）。
+_ENTRY_METERING: dict = {
+    "mcp": {"channel": "mcp", "path_prefix": "mcp", "answer_source": "mcp_tool"},
+    "dialogue": {"channel": "dialogue_api", "path_prefix": "api", "answer_source": "dialogue_api"},
+}
+
+
+def _entry_metering(entry: str) -> dict:
+    """`entry` 的計量欄位；非後端入口 ⇒ `ValueError`（不默默落到 `/mcp` 的值）。"""
+    return _ENTRY_METERING[_require_backend_entry(entry)]
+
+
+def _make_invoke(registry: ToolRegistry, deps: FacadeDeps, *, entry: str) -> Callable:
+    """產生 `_invoke(name, ctx, args)`——三道檢查 ＋ 計量 ＋ registry.call。
+
+    `entry`（**必填關鍵字**，DSP-131）決定身分的入口（`resolve_call(entry=...)`）與
+    計量欄位（channel、processing_path 前綴、answer_source）；建構時就驗，
+    非後端入口 ⇒ `ValueError`。兩個入口的 `_invoke` 除這兩件事外**同一份程式**。
+
+    失敗一律 raise `FacadeCallError(code, status, detail)`；由入口各自轉成
+    `ToolError`（`/mcp`，訊息逐字不變）或 HTTP（對話 API）。
+    """
+    metering = _entry_metering(entry)
+    path_prefix = metering["path_prefix"]
+
+    def _fail(code: Optional[str], *, status: Optional[int] = None,
+              detail: Optional[str] = None) -> FacadeCallError:
+        message = _tool_error_message(code)
+        return FacadeCallError(
+            message, status if status is not None else dialogue_status_for(message), detail
+        )
 
     async def _invoke(name: str, ctx: Any, args: dict) -> dict:
-        tool_error = _tool_error_cls()
         pool = deps.get_db_pool()
         headers = getattr(ctx, "headers", None)
         try:
-            call = await resolve_call(headers, pool)
+            call = await resolve_call(headers, pool, entry=entry)
         except McpRequestError as e:
-            raise tool_error(_tool_error_message(e.code)) from None
+            raise _fail(e.code, status=e.status) from None
 
         identity = call.identity
         note_mcp_traffic(identity.api_key_id, is_internal=call.is_internal)
 
         from services import usage_metering as um
 
-        um.begin(_metering_fields(identity))
+        um.begin(_metering_fields(identity, entry=entry))
         uctx = um._ctx.get()
         if uctx is None:
             _STATS.metering_unavailable += 1
             logger.error("[mcp] 計量 context 建立失敗（USAGE_METERING_ENABLED？）——拒絕服務")
-            raise tool_error(_tool_error_message(ERR_METERING))
-        _stamp_metering_context(uctx, identity, call.is_internal, name)
+            raise _fail(ERR_METERING)
+        _stamp_metering_context(uctx, identity, call.is_internal, name, entry=entry)
 
         quota = await um.quota_check(pool, identity.vendor_id, call.is_internal)
         if quota.state == "blocked":
             um.set_path("quota_blocked")
             um.finalize("blocked", 429, db_pool=pool)
-            raise tool_error(_tool_error_message(ERR_QUOTA))
+            raise _fail(ERR_QUOTA)
 
         timeout_s = deps.tool_timeout_s
         # ⚠️ preflight 只在 `agent.turn` **對這個身分可見**時才跑。不可見時
@@ -3168,10 +3291,10 @@ def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
             # `usage_events`」，被擋掉的呼叫同樣得留下那一列，⛔ 不能是免費的探測。
             code = _agent_turn_preflight(deps, identity)
             if code is not None:
-                um.set_path(f"mcp:{AGENT_TURN_NAME}:{code}")
+                um.set_path(f"{path_prefix}:{AGENT_TURN_NAME}:{code}")
                 um.finalize("blocked" if code == "RATE_LIMITED" else "error",
                             429 if code == "RATE_LIMITED" else 503, db_pool=pool)
-                raise tool_error(_tool_error_message(code))
+                raise _fail(code)
             # 外層只是保險（見 `_AGENT_TURN_OUTER_MARGIN_S`）；真正決定
             # 「逾時不 save」的是 `_agent_turn` 內層那個 `wait_for`。
             timeout_s = agent_turn_timeout_s() + _AGENT_TURN_OUTER_MARGIN_S
@@ -3185,9 +3308,9 @@ def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
                 identity_for_tool = namespaced_identity(identity)
             except ValueError:
                 # 缺 api_key_id／vendor_id 或鍵超長 ⇒ fail-closed。⛔ 不退回裸身分。
-                um.set_path(f"mcp:{name}:INVALID_INPUT")
+                um.set_path(f"{path_prefix}:{name}:INVALID_INPUT")
                 um.finalize("error", 400, db_pool=pool)
-                raise tool_error(_tool_error_message("INVALID_INPUT"))
+                raise _fail("INVALID_INPUT")
 
         try:
             result = await registry.call(
@@ -3204,15 +3327,14 @@ def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
         um.finalize("success" if result.ok else "error", 200, db_pool=pool)
 
         if not result.ok:
-            detail = _input_detail(result)
-            message = _tool_error_message(result.error)
-            raise tool_error(f"{message}: {detail}" if detail else message)
+            # `str(FacadeCallError)` ＝ 改版前的 `f"{message}: {detail}" if detail else message`。
+            raise _fail(result.error, detail=_input_detail(result))
         return result.data or {}
 
     return _invoke
 
 
-def _metering_fields(identity: Identity) -> dict:
+def _metering_fields(identity: Identity, *, entry: str = "mcp") -> dict:
     """`usage_metering.begin()` 的欄位。
 
     ⛔ **刻意不傳 `session_id`**：`begin()` 會拿它跑 `INTERNAL_RULES`
@@ -3220,6 +3342,9 @@ def _metering_fields(identity: Identity) -> dict:
     與否只能由 API key 紀錄決定（決策 13）。session_id 於
     `_stamp_metering_context()` 直接補進 context，⛔ 不經規則表。
     ⛔ 也不傳 `message`（門面不接觸對話原文）。
+
+    `entry` 決定 `channel`（`_ENTRY_METERING`；`/mcp` ⇒ `"mcp"`，對話 API ⇒
+    `"dialogue_api"`）。預設 `"mcp"` 只為既有單參數呼叫點；`_invoke` 一律明傳。
     """
     return {
         "vendor_id": identity.vendor_id,
@@ -3227,34 +3352,42 @@ def _metering_fields(identity: Identity) -> dict:
         "target_user": identity.target_user,
         "role_id": identity.role_id,
         "user_id": identity.user_id,
-        "channel": "mcp",
+        "channel": _entry_metering(entry)["channel"],
     }
 
 
-def _stamp_metering_context(uctx: Any, identity: Identity, is_internal: bool, name: str) -> None:
-    """把 `/mcp` 專屬欄位蓋回計量 context（session_id、is_internal、路徑）。"""
+def _stamp_metering_context(uctx: Any, identity: Identity, is_internal: bool, name: str,
+                            *, entry: str) -> None:
+    """把後端入口專屬欄位蓋回計量 context（session_id、is_internal、路徑、answer_source）。"""
+    metering = _entry_metering(entry)
     uctx.session_id = identity.session_id
     uctx.is_internal = bool(is_internal)
     uctx.internal_kind = "api_key" if is_internal else None
-    uctx.processing_path = f"mcp:{name}"[:60]
-    uctx.answer_source = "mcp_tool"
+    uctx.processing_path = f"{metering['path_prefix']}:{name}"[:60]
+    uctx.answer_source = metering["answer_source"]
 
 
 @dataclass(frozen=True)
 class ResolvedCall:
-    """一次 `/mcp` 請求解析後的身分與 key 屬性。"""
+    """一次後端入口請求（`/mcp` 或對話 API）解析後的身分與 key 屬性。"""
 
     identity: Identity
     api_key_id: Optional[int]
     is_internal: bool
 
 
-async def resolve_call(headers: Any, pool: Any, allowed_origins: Optional[frozenset] = None) -> ResolvedCall:
+async def resolve_call(headers: Any, pool: Any, allowed_origins: Optional[frozenset] = None,
+                       *, entry: str) -> ResolvedCall:
     """三道請求層檢查（順序固定）：key → Origin → 身分。
+
+    `entry`（**必填關鍵字**，DSP-131）原樣交給 `parse_identity`；非後端入口 ⇒
+    `ValueError`，在查 key 之前就拒。
 
     Raises:
         McpRequestError: 401／403／400，`code` 為封閉業務代碼。
+        ValueError: `entry` 不是後端入口（程式錯誤）。
     """
+    entry = _require_backend_entry(entry)
     from fastapi import HTTPException
 
     from services.api_key_auth import require_api_key_unconditional
@@ -3269,7 +3402,7 @@ async def resolve_call(headers: Any, pool: Any, allowed_origins: Optional[frozen
     async def _vendor_exists(vendor_id: int) -> bool:
         return await vendor_exists(pool, vendor_id)
 
-    identity = await parse_identity(headers, key=key, vendor_check=_vendor_exists)
+    identity = await parse_identity(headers, key=key, vendor_check=_vendor_exists, entry=entry)
     return ResolvedCall(
         identity=identity,
         api_key_id=key.get("id"),
@@ -3309,6 +3442,22 @@ def _tool_error_cls():
     return ToolError
 
 
+def _mcp_tool_invoke(invoke: Callable) -> Callable:
+    """`/mcp` 包裝層：把 `_invoke` 的 `FacadeCallError` 轉回 SDK 的 `ToolError`。
+
+    訊息＝`str(err)`，與改版前 `tool_error(...)` 的訊息**逐字相同**
+    （`code` 或 `f"{code}: {detail}"`）。其他例外照舊原樣往上拋。
+    """
+
+    async def _tool_invoke(name: str, ctx: Any, args: dict) -> dict:
+        try:
+            return await invoke(name, ctx, args)
+        except FacadeCallError as err:
+            raise _tool_error_cls()(str(err)) from None
+
+    return _tool_invoke
+
+
 # ════════════════════════════════════════════════════════════════════
 # MCP server 建構
 # ════════════════════════════════════════════════════════════════════
@@ -3324,7 +3473,7 @@ def build_mcp_server(registry: ToolRegistry, deps: FacadeDeps):
     from mcp.server.mcpserver import Context, MCPServer
 
     mcp = MCPServer("jgb-tools", middleware=[_ToolListFilter(registry, deps)])
-    invoke = _make_invoke(registry, deps)
+    invoke = _mcp_tool_invoke(_make_invoke(registry, deps, entry="mcp"))
 
     for spec in union_specs(registry, deps.stage):
         fn = _build_wrapper(spec, invoke, Context)
@@ -3362,6 +3511,8 @@ def union_specs(registry: ToolRegistry, stage: Stage) -> list:
         # `mcp.add_tool` 清單**（建構期一次），本來就只描述 MCP 入口看得到什麼。
         # ⛔ 不帶就等於「寫入型工具永遠不會被註冊到 MCP server 上」，
         # per-identity 的真閘仍在 `_ToolListFilter`（列表）與 `registry.call`（呼叫）。
+        # 寫入改接片 W8：探針不帶金鑰 id ⇒ 寫入工具不在 `assistant_key_ids()` 內、不會出現在這份聯集，
+        # 所以 `/mcp` server 不註冊寫入工具；站內幫手的寫入只經 `agent.turn` 內的 `registry.call`。
         probe = Identity(vendor_id=None, target_user=target_user, mode=mode,
                          entry="mcp")
         for spec in registry.specs_for(probe, stage, for_model=False):
@@ -3431,7 +3582,7 @@ class _ToolListFilter:
             return result
         try:
             headers = getattr(getattr(ctx, "request", None), "headers", None)
-            call = await resolve_call(headers, self._deps.get_db_pool())
+            call = await resolve_call(headers, self._deps.get_db_pool(), entry="mcp")
             visible = {
                 s["name"]
                 for s in self._registry.specs_for(
@@ -3517,9 +3668,15 @@ class McpServiceGate:
 
         headers = Headers(scope=scope)
         try:
-            call = await resolve_call(headers, self._get_pool(), self._allowed_origins)
+            # 閘本身一律以 `"mcp"` 解析（計畫 §5.2：閘的結果只供 `/mcp` 額度短路）；
+            # 對話 API 的 `_invoke` 會以 `entry="dialogue"` 自己再解析一次。
+            call = await resolve_call(headers, self._get_pool(), self._allowed_origins,
+                                      entry="mcp")
         except McpRequestError as e:
-            if str(scope.get("path", "")).startswith("/mcp"):
+            gated_path = str(scope.get("path", ""))
+            # 對話 API 被擋的嘗試同樣計入（F3）：通過閘的呼叫由 `_invoke` 計，
+            # 被閘擋下的走不到 `_invoke`，只能在這裡計。
+            if gated_path.startswith("/mcp") or gated_path in DIALOGUE_PATHS:
                 # `ERR_API_KEY`（401）＝key 本身缺／驗不到——這才是「未登錄」；
                 # 其他代碼（vendor_unknown／origin_not_allowed…）發生在 key 已
                 # 驗過**之後**，各自已有獨立旗標，⛔ 不冒充成 key 問題。

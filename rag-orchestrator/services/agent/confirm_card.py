@@ -950,6 +950,51 @@ PHOTO_REUPLOAD_TEXT: Final[str] = "這筆修繕單的照片已失效，沒有送
 #: （錯誤碼仍是封閉值域的 `INVALID_INPUT`；runtime 據此回 `PHOTO_REUPLOAD_TEXT`）。
 PHOTOS_UNAVAILABLE_KEY: Final[str] = "photos_unavailable"
 
+# ---------------------------------------------------------------------------
+# 寫入改接片 W6／W7：接真 JGB（`JGB_WRITE_WIRING=on`）時的寫入結果固定句
+# ---------------------------------------------------------------------------
+# receipt 錯誤碼是**封閉值域**：JGB 白名單拒絕每句一碼（`services/jgb/transport.WRITE_REJECTION_WHITELIST`
+# 的值，測試以集合相等互證）＋`unconfirmed`＋`failed`。兌現段與同一張卡重按的
+# `AgentRuntime._answer_for_receipt` 都依錯誤碼查 `WRITE_RESULT_TEXTS` ⇒ 重按回同一句（R4.3）。
+# ⚠️ 句子全是程式常數：JGB 回來的訊息原文 ⛔ 轉給客人、⛔ 進模型、⛔ 進 log——白名單只拿它
+#    跟 staging `544e8592eb` 的 `MSG_*` 全文比對，比中才換成這裡的常數。
+
+#: 寫入工具判出寫入結果時放在 `ToolResult.data` 的旗標鍵（值＝封閉錯誤碼）。
+WRITE_RESULT_KEY: Final[str] = "write_result"
+#: 請求可能已到 JGB、結果無法確定（W7）。
+WRITE_RESULT_UNCONFIRMED: Final[str] = "unconfirmed"
+#: 確定沒有寫入、但不在白名單內（白名單外 4xx、金鑰層、404 折疊、送出前失敗）。
+WRITE_RESULT_FAILED: Final[str] = "failed"
+
+#: W7：結果未確認的固定句（計畫 W7 原句）。⛔ 回「無法執行」——那會讓客人重開新卡、
+#: 新冪等鍵 ⇒ 重複單（錯筆寫入）。
+UNCONFIRMED_TEXT: Final[str] = "結果未確認，請到 JGB 畫面確認是否已建立，再決定要不要重送"
+
+_REJECTED_PREFIX: Final[str] = "這筆操作沒有完成："
+
+#: W6：錯誤碼 ⇒ 固定句。白名單拒絕句的原因段逐字照抄 jgb2 `origin/staging` `544e8592eb`
+#: 的 `MSG_*` 常數（`EstateController`／`ContractController`／`BillController`）與
+#: `RepairController::store` 的兩句 `errorResponse(400, …)`。
+WRITE_RESULT_TEXTS: Final[dict] = {
+    "no_subscription": _REJECTED_PREFIX + "此團隊目前沒有有效的訂閱方案。",
+    "estate_limit": _REJECTED_PREFIX + "物件數量已達訂閱方案上限。",
+    "address_unresolved": _REJECTED_PREFIX + "縣市或行政區無法辨識。",
+    "contract_limit": _REJECTED_PREFIX + "合約數量已達訂閱方案上限。",
+    "company_phone": _REJECTED_PREFIX + "公司電話未填寫，請先到團隊資訊填寫。",
+    "user_phone": _REJECTED_PREFIX + "操作成員的手機號碼未綁定，請先到帳號資訊綁定。",
+    "parking": _REJECTED_PREFIX + "車位物件無法新增合約。",
+    "estate_incomplete": _REJECTED_PREFIX + "請先完善物件所有必填欄位。",
+    "estate_owner": _REJECTED_PREFIX + "物件擁有者資料不存在。",
+    "estate_contract_limit": _REJECTED_PREFIX
+    + "該物件有效合約數量已達 10 份上限，需刪除或結束合約後才能再新增。",
+    "no_lessee": _REJECTED_PREFIX + "此合約尚未綁定承租方，無法建立帳單。",
+    "due_not_draft": _REJECTED_PREFIX + "只有待發送的帳單可以修改到期日。",
+    "repair_category": _REJECTED_PREFIX + "修繕分類不存在或已停用。",
+    "repair_item": _REJECTED_PREFIX + "修繕項目不屬於此分類或已停用。",
+    WRITE_RESULT_UNCONFIRMED: UNCONFIRMED_TEXT,
+    WRITE_RESULT_FAILED: ACTION_FAILED_TEXT,
+}
+
 #: receipt 裡可以進 trace／回覆句的識別碼形狀（⛔ 只收這個形狀）。
 #: receipt 是**下游系統**回來的資料，其中任何一個自由文字欄位都可能是原文；
 #: 只放行這種形狀的短識別碼，才不會讓「把單號印給使用者」順手變成把下游訊息
@@ -1035,6 +1080,11 @@ __all__ = [
     "repair_photos_of",
     "PHOTO_REUPLOAD_TEXT",
     "PHOTOS_UNAVAILABLE_KEY",
+    "WRITE_RESULT_KEY",
+    "WRITE_RESULT_UNCONFIRMED",
+    "WRITE_RESULT_FAILED",
+    "UNCONFIRMED_TEXT",
+    "WRITE_RESULT_TEXTS",
     "ESTATE_CREATE_ACTION",
     "CONTRACT_CREATE_ACTION",
     "MANUAL_BILL_CREATE_ACTION",

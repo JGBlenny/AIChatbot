@@ -71,6 +71,7 @@ def _env(monkeypatch):
     monkeypatch.delenv(WF.WRITE_REPLY_PROGRAM_ENV, raising=False)  # B 片：未設＝on
     monkeypatch.delenv("AGENT_STATE_CLAIM_GATE", raising=False)    # B 片：未設＝on
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "1")   # 寫入改接片 W8：身分的金鑰 id 列入（期望值不變）
 
 
 @pytest.fixture()

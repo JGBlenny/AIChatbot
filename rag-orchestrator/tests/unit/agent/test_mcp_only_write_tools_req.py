@@ -86,6 +86,12 @@ def _pm(**overrides) -> Identity:
     return Identity(**base)
 
 
+@pytest.fixture(autouse=True)
+def _assistant_key(monkeypatch):
+    """寫入改接片 W8：寫入工具只給站內幫手金鑰 ⇒ 本檔身分的金鑰 id 列入 `AGENT_ASSISTANT_KEY_IDS`（期望值不變）。"""
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "1")
+
+
 # ---------------------------------------------------------------------------
 # 0. 旗標解析與預設
 # ---------------------------------------------------------------------------

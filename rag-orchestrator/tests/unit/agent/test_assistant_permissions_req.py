@@ -120,18 +120,18 @@ async def _vendor_ok(vendor_id):
 async def test_assistant_key_requires_user_id(monkeypatch):
     monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "5, 7")
     with pytest.raises(F.McpRequestError) as err:
-        await F.parse_identity(_headers(), key={"id": 7, "vendor_ids": None}, vendor_check=_vendor_ok)
+        await F.parse_identity(_headers(), key={"id": 7, "vendor_ids": None}, vendor_check=_vendor_ok, entry="mcp")
     assert (err.value.status, err.value.code) == (400, F.ERR_IDENTITY_NO_USER)
     ok = await F.parse_identity(_headers(user_id=OWNER), key={"id": 7, "vendor_ids": None},
-                                vendor_check=_vendor_ok)
+                                vendor_check=_vendor_ok, entry="mcp")
     assert ok.user_id == OWNER
     # 正對照：不在名單的金鑰照舊（pm 單證）
-    other = await F.parse_identity(_headers(), key={"id": 9, "vendor_ids": None}, vendor_check=_vendor_ok)
+    other = await F.parse_identity(_headers(), key={"id": 9, "vendor_ids": None}, vendor_check=_vendor_ok, entry="mcp")
     assert other.user_id is None
     # 未設定 ⇒ 不對任何金鑰啟用
     monkeypatch.delenv("AGENT_ASSISTANT_KEY_IDS", raising=False)
     assert (await F.parse_identity(_headers(), key={"id": 7, "vendor_ids": None},
-                                   vendor_check=_vendor_ok)).user_id is None
+                                   vendor_check=_vendor_ok, entry="mcp")).user_id is None
 
 
 def test_bad_assistant_key_ids_fail_loud_at_startup(monkeypatch):
@@ -147,14 +147,14 @@ def test_bad_assistant_key_ids_fail_loud_at_startup(monkeypatch):
 async def test_literal_anonymous_user_id_is_rejected():
     with pytest.raises(F.McpRequestError) as err:
         await F.parse_identity(_headers(user_id="anonymous"), key={"id": 9, "vendor_ids": None},
-                               vendor_check=_vendor_ok)
+                               vendor_check=_vendor_ok, entry="mcp")
     assert (err.value.status, err.value.code) == (400, F.ERR_IDENTITY_MALFORMED)
 
 
 async def test_vendor_outside_key_scope_is_403():
     with pytest.raises(F.McpRequestError) as err:
         await F.parse_identity(_headers(user_id=OWNER), key={"id": 9, "vendor_ids": [1]},
-                               vendor_check=_vendor_ok)
+                               vendor_check=_vendor_ok, entry="mcp")
     assert (err.value.status, err.value.code) == (403, F.ERR_VENDOR_OUT_OF_KEY_SCOPE)
 
 
@@ -267,7 +267,8 @@ async def test_every_jgb2_call_from_every_agent_path_carries_role_and_viewer(api
     monkeypatch.setenv("AGENT_ATTACHMENT_INPUT", "urls")   # UD-1：本條用網址線照片回合
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
     monkeypatch.setenv("AGENT_TURN_ENABLED", "true")
-    monkeypatch.delenv("AGENT_ASSISTANT_KEY_IDS", raising=False)
+    # 寫入改接片 W8：寫入工具只給站內幫手金鑰 ⇒ `_pm()` 的金鑰 id 1 列入（身分本來就帶 user_id，期望值不變）。
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "1")
     monkeypatch.delenv("AGENT_NAME_LENIENT", raising=False)  # F12 未設＝on：寬鬆比對的呼叫點要被跑到
 
     # 記下每一次 API 呼叫的**呼叫端**（檔名＋qualname），對 AST 呼叫點做覆蓋比對
@@ -586,6 +587,8 @@ async def test_read_log_records_flags_only(api, monkeypatch, tmp_path):
 # ════════════════════════════════════════════════════════════════════
 async def test_part_member_cannot_create_a_repair_on_an_unseen_estate(api, monkeypatch, tmp_path):
     monkeypatch.setenv(MOCK_WRITE_LOG_ENV, str(tmp_path / "w.jsonl"))
+    # 寫入改接片 W8：寫入工具只給站內幫手金鑰 ⇒ `_pm()` 的金鑰 id 1 列入（期望值不變）。
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "1")
     reg = ToolRegistry(write_tools_enabled=True, redeem_checker=AsyncMock(return_value=True))
     for s, f in action_tools.ACTION_SPECS:
         reg.register(s, f)

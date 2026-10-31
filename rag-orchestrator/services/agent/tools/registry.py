@@ -59,6 +59,7 @@ from services.agent.identity import (
     Audience,
     Identity,
     Stage,
+    is_backend_entry,
 )
 from services.agent.limits import LIMITS
 
@@ -98,6 +99,23 @@ def write_tools_enabled() -> bool:
     return (os.environ.get(AGENT_WRITE_TOOLS_ENV) or "").strip().lower() in _TRUTHY
 
 
+def _assistant_key_ok(identity: Any) -> bool:
+    """寫入改接片 W8：呼叫端金鑰 id ∈ `mcp_facade.assistant_key_ids()`（`AGENT_ASSISTANT_KEY_IDS`）。
+
+    ⚠️ 延遲 import：`mcp_facade` 反過來 import 本模組（環狀）。env 含非整數 ⇒ `RuntimeError`
+    ⇒ 當空集合；env 未設／空 ⇒ 空集合 ⇒ 一律否（fail-closed：連文字修繕在內的寫入工具都不可見）。
+    `api_key_id` 須是 int（⛔ bool）。"""
+    key_id = getattr(identity, "api_key_id", None)
+    if isinstance(key_id, bool) or not isinstance(key_id, int):
+        return False
+    try:
+        from services.agent.mcp_facade import assistant_key_ids
+        ids = assistant_key_ids()
+    except RuntimeError:
+        return False
+    return key_id in ids
+
+
 _MINUTE_S = 60.0
 _HOUR_S = 3600.0
 
@@ -125,7 +143,7 @@ class ToolSpec(TypedDict, total=False):
     stage: dict[Audience, Stage]
     facade_only: bool  # 預設 False；1.4.1：True ⇒ 只由 MCP 門面呼叫
     mutates_session: bool  # 預設 False；DSP-016：True ⇒ 會寫 session 狀態（slots／token 表），影子 readonly_view 不可見
-    mcp_only: bool  # 預設 False；DSP-038-1：True ⇒ 只有 `identity.entry=="mcp"` 看得到，且另需 AGENT_WRITE_TOOLS_ENABLED
+    mcp_only: bool  # 預設 False；DSP-038-1：True ⇒ 只有後端入口（`is_backend_entry(identity.entry)`，DSP-131）看得到，且另需 AGENT_WRITE_TOOLS_ENABLED
     # ⚠️ `scope=="write"` **必須**同時是 `mcp_only=True`（`register()` 期 raise），
     #    且寫入面一律被共用 wrapper 包住（`_wrap_write_tool`）。
 
@@ -523,7 +541,7 @@ class ToolRegistry:
             and (not readonly_view or (scope == "read" and not mutates_session))
             and not (facade_only and (for_model or readonly_view))
             and (not (mcp_only or scope == "write")
-                 or (identity.entry == "mcp" and 旗標開))`
+                 or (is_backend_entry(identity.entry) and 旗標開))`
 
         DSP-016：`session.slots.set`／`confirm.request` 是 scope=read 但會寫
         `form_sessions`／token 表；影子回合與正式回合共用 session_id，只看 scope 會讓影子
@@ -531,7 +549,8 @@ class ToolRegistry:
 
         DSP-038-1：**寫入面**（`mcp_only=True` **或** `scope=="write"`）
         另外要過**兩道**閘，兩道都與 `for_model`／`readonly_view` 正交：
-          ① **入口**——`identity.entry != "mcp"` ⇒ 不可見。REST 入口的身分一律
+          ① **入口**——`not is_backend_entry(identity.entry)` ⇒ 不可見（後端入口＝
+             `identity.BACKEND_ENTRIES`：`/mcp` 與專用對話 API，DSP-131）。REST 入口的身分一律
              落預設 `"rest"`（`identity.DEFAULT_ENTRY_CHANNEL`），因此看不到、
              也呼叫不到（`call()` 走同一個 `_is_visible` ⇒ `NO_MATCH`）。
           ② **旗標**——`AGENT_WRITE_TOOLS_ENABLED` 未開 ⇒ 不可見（R4.4）。
@@ -558,11 +577,20 @@ class ToolRegistry:
             if spec.get("facade_only") and (for_model or readonly_view):
                 continue
             if (spec.get("mcp_only") or spec.get("scope") == "write") and (
-                entry != "mcp" or not write_ok
+                not is_backend_entry(entry) or not write_ok
             ):
+                continue
+            if spec.get("scope") == "write" and not _assistant_key_ok(identity):
+                # 寫入改接片 W8：寫入工具只給站內幫手金鑰（`AGENT_ASSISTANT_KEY_IDS`）。`call()` 走同一個
+                # `_is_visible` ⇒ 看不到也執行不了。env 空或不合法 ⇒ 空集合 ⇒ 寫入工具全部不可見（fail-closed）。
                 continue
             visible.append(spec)
         return visible
+
+    def is_write_tool(self, name: str) -> bool:
+        """`name` 是已註冊的寫入工具（spec `scope == "write"`）。runtime 兌現段據此決定工具逾時（W7）。"""
+        spec = self._specs.get(name)
+        return isinstance(spec, dict) and spec.get("scope") == "write"
 
     def write_tools_enabled(self) -> bool:
         """本 registry 這一刻認定的旗標值（建構時釘住的值，或現讀 env）。

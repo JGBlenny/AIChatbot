@@ -12,12 +12,14 @@ design.md 附錄 B 稱這五條為「不變量 18–22」，但合併時發現
 | 本檔 print 的編號 | design.md 附錄 B 編號 | 內容 |
 |---|---|---|
 | 27 | 18 | `ToolSpec.input_schema` 無身分鍵（掃 `services/agent/**/*.py`）|
-| 28 | 19 | `_EXEMPT_PREFIX` 不含 `/mcp`；門面內不得出現 `auth_enforced` |
+| 28 | 19 | `_EXEMPT_PREFIX` 不含 `/mcp`；門面與對話 API 路由內不得出現 `auth_enforced`；對話 API 路徑都在 `GATED_PREFIXES` 內、不在豁免（DSP-131）|
 | 29 | 20 | 可見性謂詞單一來源（`build_visibility_predicate`） |
 | 30 | 21 | `decision_snapshot.agent*` 無原文鍵 |
-| 31 | 22 | `/mcp` 每呼叫一列 `usage_events`（登記，見 1.7） |
+| 31 | 22 | `/mcp` 與對話 API 每呼叫一列 `usage_events`（登記覆蓋測試，見 1.7、DSP-131）|
 | 29b | — | canon 可見性單一來源（`canon_assembler.canon_visible`；同 spec 3.2）|
 | 32 | —  | 內容已審謂詞單一來源（spec knowledge-outline-and-intent-architecture 3.1）|
+| 28b | — | 對話 API 路由（`routers/agent_dialogue.py`）不 import `mcp`／`mcp.*`（DSP-131 F9）|
+| 28c | — | `identity.py` 以外不得拿 `entry` 跟入口字面值（`"mcp"`／`"dialogue"`／`"rest"`）比較（DSP-131 F9）|
 
 32 不屬於上表那條編號衝突：它來自另一個 spec，附錄 B 直接就叫「不變量 32」。
 31／32 都是**三態**（PASS／WARN・SKIP／FAIL），故與 27–30 一樣放在 `CHECKS` 之外，
@@ -205,19 +207,145 @@ def check_27_toolspec_identity_keys(src=None, path=None, paths=None):
 
 # ───────────────────────── 28（design 19）/mcp 無條件 401；門面不得看 auth_enforced ─────────────────────────
 
-def check_28_mcp_auth_unconditional(auth_src=None, facade_paths=None):
-    """design 19：`_EXEMPT_PREFIX` 不含 `/mcp`；`mcp_facade.py`／`routers/agent.py`
-    內不得出現 `auth_enforced` 名稱（否則等於讓 `/mcp` 又受
-    `RAG_API_AUTH_ENFORCE` 擺佈）。"""
+#: 對話 API 路由檔（DSP-131）。28 掃它的 `auth_enforced` 與路由路徑；28b 掃它的 import。
+DIALOGUE_ROUTER_REL = "routers/agent_dialogue.py"
+FACADE_REL = "services/agent/mcp_facade.py"
+UPLOAD_STORE_REL = "services/agent/upload_store.py"
+#: 28 掃 `auth_enforced` 的預設檔清單。
+FACADE_AUTH_PATHS = (FACADE_REL, "routers/agent.py", DIALOGUE_ROUTER_REL)
+#: 對話 API 路徑常數（住在 `mcp_facade.py`）；路由檔只准用這兩個名字註冊路徑。
+DIALOGUE_PATH_CONSTS = ("DIALOGUE_TURN_PATH", "DIALOGUE_UPLOAD_TICKET_PATH")
+#: 算「註冊路由」的呼叫（`router.<attr>(path, ...)`）。
+_ROUTE_REGISTER_ATTRS = frozenset({
+    "add_api_route", "api_route", "add_route", "add_api_websocket_route", "websocket",
+    "get", "post", "put", "patch", "delete", "options", "head", "trace",
+})
+
+
+def _module_literal_assigns(tree):
+    """模組最上層 `NAME = <字面量>`（含帶型別註記）⇒ `{NAME: 值}`；非字面量略過。"""
+    out = {}
+    for node in getattr(tree, "body", []):
+        targets, value = [], None
+        if isinstance(node, ast.Assign):
+            targets, value = node.targets, node.value
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            targets, value = [node.target], node.value
+        for t in targets:
+            if isinstance(t, ast.Name):
+                try:
+                    out[t.id] = ast.literal_eval(value)
+                except (ValueError, TypeError, SyntaxError):
+                    pass
+    return out
+
+
+def scan_28_dialogue_routes(router_src, facade_src, exempt_prefixes, upload_src):
+    """對話 API 路由（DSP-131 F9）：回 `(bad, info)`。
+
+    ① 路由檔必須存在（⛔ 略過——它不在，`/api/v1/agent/turn` 的閘覆蓋就無從驗起）；
+    ② `mcp_facade.py` 的 `DIALOGUE_TURN_PATH`／`DIALOGUE_UPLOAD_TICKET_PATH` 都以
+       `GATED_PREFIXES` 之一開頭、⛔ 以 `_EXEMPT_PREFIX` 之一開頭、⛔ 等於上傳豁免的
+       `UPLOAD_PATH`（`McpServiceGate(exempt_upload=True)` 唯一放行的路徑）；
+    ③ 路由檔每個註冊路由的呼叫，路徑引數都是這兩個常數名之一（寫字串字面量 ⇒ 紅：
+       ②驗不到它），且兩個常數都有被註冊（正對照：不是掃到 0 個路由）。
+    """
+    bad, info = [], []
+    if router_src is None:
+        bad.append(f"{DIALOGUE_ROUTER_REL} 不存在——對話 API 路由的閘覆蓋無從驗起，大聲失敗")
+    if facade_src is None:
+        bad.append(f"{FACADE_REL} 讀不到——找不到對話 API 路徑常數，大聲失敗")
+        return bad, info
+    ftree = _parse(facade_src)
+    if ftree is None:
+        bad.append(f"{FACADE_REL} 語法錯誤——大聲失敗")
+        return bad, info
+    consts = _module_literal_assigns(ftree)
+    gated = consts.get("GATED_PREFIXES")
+    if not (isinstance(gated, tuple) and gated and all(isinstance(p, str) and p for p in gated)):
+        bad.append(f"{FACADE_REL} 找不到 `GATED_PREFIXES = (...)` 字串 tuple——大聲失敗")
+        gated = ()
+    upload_path = None
+    if upload_src is None:
+        bad.append(f"{UPLOAD_STORE_REL} 讀不到——找不到 UPLOAD_PATH，大聲失敗")
+    else:
+        upload_path = _module_literal_assigns(_parse(upload_src) or ast.Module(body=[])).get("UPLOAD_PATH")
+        if not isinstance(upload_path, str):
+            bad.append(f"{UPLOAD_STORE_REL} 找不到 `UPLOAD_PATH = \"...\"`——大聲失敗")
+    exempt = tuple(str(p) for p in (exempt_prefixes or ()))
+    for name in DIALOGUE_PATH_CONSTS:
+        path = consts.get(name)
+        if not isinstance(path, str) or not path:
+            bad.append(f"{FACADE_REL} 找不到 `{name} = \"...\"`——大聲失敗")
+            continue
+        if gated and not path.startswith(gated):
+            bad.append(f"{name}={path!r} 不在 GATED_PREFIXES {gated} 內——McpServiceGate 擋不到")
+        if exempt and path.startswith(exempt):
+            bad.append(f"{name}={path!r} 落在 _EXEMPT_PREFIX {exempt}——會變成不需金鑰")
+        if upload_path is not None and path == upload_path:
+            bad.append(f"{name}={path!r} 等於上傳豁免路徑 UPLOAD_PATH——閘會直接放行")
+        info.append(f"{name}={path}")
+
+    if router_src is None:
+        return bad, info
+    rtree = _parse(router_src)
+    if rtree is None:
+        bad.append(f"{DIALOGUE_ROUTER_REL} 語法錯誤——大聲失敗")
+        return bad, info
+    # 路由物件＝被 `APIRouter(...)`／`FastAPI(...)` 賦值的名字；只認它們身上的註冊呼叫
+    # （`request.headers.get("content-length")` 之類不是路由）。
+    router_names = set()
+    for node in ast.walk(rtree):
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
+            fn = node.value.func
+            callee = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else ""
+            if callee in ("APIRouter", "FastAPI"):
+                router_names |= {t.id for t in node.targets if isinstance(t, ast.Name)}
+    if not router_names:
+        bad.append(f"{DIALOGUE_ROUTER_REL} 找不到 `<名> = APIRouter(...)`——大聲失敗")
+    used, registrations = set(), 0
+    for node in ast.walk(rtree):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and node.func.attr in _ROUTE_REGISTER_ATTRS
+                and isinstance(node.func.value, ast.Name) and node.func.value.id in router_names):
+            continue
+        path_arg = node.args[0] if node.args else next(
+            (kw.value for kw in node.keywords if kw.arg == "path"), None)
+        registrations += 1
+        if path_arg is None:
+            bad.append(f"{DIALOGUE_ROUTER_REL} 第 {node.lineno} 行 `.{node.func.attr}(...)` 沒有路徑引數")
+            continue
+        name = (path_arg.attr if isinstance(path_arg, ast.Attribute)
+                else path_arg.id if isinstance(path_arg, ast.Name) else None)
+        if name in DIALOGUE_PATH_CONSTS:
+            used.add(name)
+        else:
+            bad.append(f"{DIALOGUE_ROUTER_REL} 第 {node.lineno} 行 `.{node.func.attr}(...)` 的路徑"
+                       f"不是 {'／'.join(DIALOGUE_PATH_CONSTS)} 之一——閘覆蓋驗不到它")
+    missing = [n for n in DIALOGUE_PATH_CONSTS if n not in used]
+    if missing:
+        bad.append(f"{DIALOGUE_ROUTER_REL} 沒有用 {'、'.join(missing)} 註冊路由"
+                   f"（掃到 {registrations} 個路由註冊）——大聲失敗")
+    info.append(f"{DIALOGUE_ROUTER_REL} 註冊 {registrations} 個路由")
+    return bad, info
+
+
+def check_28_mcp_auth_unconditional(auth_src=None, facade_paths=None,
+                                    router_src=None, facade_src=None, upload_src=None):
+    """design 19：`_EXEMPT_PREFIX` 不含 `/mcp`；`mcp_facade.py`／`routers/agent.py`／
+    `routers/agent_dialogue.py` 內不得出現 `auth_enforced` 名稱（否則等於讓 `/mcp`
+    又受 `RAG_API_AUTH_ENFORCE` 擺佈）；對話 API 路徑的閘覆蓋見 `scan_28_dialogue_routes`。
+
+    `router_src`／`facade_src`／`upload_src` 供自測植入；未給 ⇒ 讀真檔。"""
     auth_path = "services/api_key_auth.py"
     if auth_src is None:
         auth_src = _read(os.path.join(RAG, auth_path))
     bad = []
+    exempt_val = None
     if auth_src is None:
         bad.append(f"{auth_path} 不存在——找不到 _EXEMPT_PREFIX，大聲失敗")
     else:
         tree = _parse(auth_src)
-        exempt_val = None
         if tree is not None:
             for node in ast.walk(tree):
                 if isinstance(node, ast.Assign) and any(
@@ -229,7 +357,7 @@ def check_28_mcp_auth_unconditional(auth_src=None, facade_paths=None):
         elif any(str(p).startswith("/mcp") for p in exempt_val):
             bad.append(f"{auth_path}：_EXEMPT_PREFIX 含 /mcp（{exempt_val}）——/mcp 會變成不需認證")
 
-    facade_paths = facade_paths or ["services/agent/mcp_facade.py", "routers/agent.py"]
+    facade_paths = facade_paths or list(FACADE_AUTH_PATHS)
     notes = []
     for rel in facade_paths:
         src = _read(os.path.join(RAG, rel))
@@ -238,7 +366,189 @@ def check_28_mcp_auth_unconditional(auth_src=None, facade_paths=None):
             continue
         if "auth_enforced" in src:
             bad.append(f"{rel} 出現 `auth_enforced`——/mcp 認證不得受 RAG_API_AUTH_ENFORCE 左右")
+
+    route_bad, route_info = scan_28_dialogue_routes(
+        router_src if router_src is not None else _read(os.path.join(RAG, DIALOGUE_ROUTER_REL)),
+        facade_src if facade_src is not None else _read(os.path.join(RAG, FACADE_REL)),
+        exempt_val or (),
+        upload_src if upload_src is not None else _read(os.path.join(RAG, UPLOAD_STORE_REL)),
+    )
+    bad += route_bad
+    notes += route_info
     return (len(bad) == 0), ("；".join(bad) if bad else "；".join(notes) or "通過")
+
+
+# ───────────────────────── 28b 對話 API 路由不 import mcp.*（DSP-131 F9）─────────────────────────
+
+def check_28b_dialogue_router_no_mcp_import(src=None, rel=DIALOGUE_ROUTER_REL):
+    """對話 API 與 MCP 在協定層分開：路由檔 ⛔ import `mcp`／`mcp.*`（絕對 import；
+    含 `importlib.import_module("mcp…")`／`__import__("mcp…")`）。
+
+    路由檔不存在或掃不動 ⇒ 紅；掃到 0 個 import ⇒ 紅（正對照：它至少要 import
+    `mcp_facade` 才建得出 `_invoke`，掃到 0 個代表掃錯檔）。"""
+    if src is None:
+        src = _read(os.path.join(RAG, rel))
+    if src is None:
+        return False, f"{rel} 不存在——大聲失敗"
+    tree = _parse(src)
+    if tree is None:
+        return False, f"{rel} 語法錯誤，無法 AST 掃描——大聲失敗"
+
+    def _is_mcp(name):
+        return isinstance(name, str) and (name == "mcp" or name.startswith("mcp."))
+
+    bad, imports = [], 0
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imports += 1
+            for a in node.names:
+                if _is_mcp(a.name):
+                    bad.append(f"第 {node.lineno} 行 import {a.name}")
+        elif isinstance(node, ast.ImportFrom):
+            imports += 1
+            if node.level == 0 and _is_mcp(node.module):
+                bad.append(f"第 {node.lineno} 行 from {node.module} import …")
+        elif isinstance(node, ast.Call):
+            fn = node.func
+            fname = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else ""
+            if fname in ("import_module", "__import__") and node.args and isinstance(
+                    node.args[0], ast.Constant) and _is_mcp(node.args[0].value):
+                bad.append(f"第 {node.lineno} 行 {fname}({node.args[0].value!r})")
+    if bad:
+        return False, f"{rel}：" + "；".join(bad) + "——對話 API 不得依賴 MCP SDK"
+    if imports == 0:
+        return False, f"{rel}：掃到 0 個 import——掃錯檔或檔案被清空，大聲失敗"
+    return True, f"{rel}：掃到 {imports} 個 import，無 mcp／mcp.*"
+
+
+# ───────────────────────── 28c identity.py 以外無 entry 字面比較（DSP-131 F9）─────────────────────────
+#
+# 不變量：入口判斷只准經 `identity.is_backend_entry()`（或 identity.py 內的定義）。
+# 在別處寫 `entry == "mcp"` 會讓新入口 `"dialogue"` 靜默落到另一側；寫 `entry != "rest"`
+# 會讓任何未知值放行。故掃描面（`services/**`、`routers/**`、`app.py`，⛔ 含 tests）
+# 內任何 `entry` 與入口字面值的比較一律紅。
+#
+# 「`entry`」的認法：名字 `entry`、屬性 `.entry`、`getattr(x, "entry", …)`、
+# `x["entry"]`、`x.get("entry", …)`；比較子：`==`、`!=`、`in`、`not in`、`is`、`is not`；
+# 另一側：字串常數，或全由字串常數組成的 tuple／list／set，且至少一個是入口值。
+
+ENTRY_LITERALS = frozenset({"mcp", "dialogue", "rest"})
+ENTRY_LITERAL_ALLOWED_REL = "services/agent/identity.py"
+_ENTRY_CMP_OPS = (ast.Eq, ast.NotEq, ast.In, ast.NotIn, ast.Is, ast.IsNot)
+
+
+def _is_entry_ref(node):
+    if isinstance(node, ast.Name):
+        return node.id == "entry"
+    if isinstance(node, ast.Attribute):
+        return node.attr == "entry"
+    if isinstance(node, ast.Subscript):
+        sl = node.slice
+        return isinstance(sl, ast.Constant) and sl.value == "entry"
+    if isinstance(node, ast.Call) and len(node.args) >= 1:
+        fn = node.func
+        if isinstance(fn, ast.Name) and fn.id == "getattr" and len(node.args) >= 2:
+            return isinstance(node.args[1], ast.Constant) and node.args[1].value == "entry"
+        if isinstance(fn, ast.Attribute) and fn.attr == "get":
+            return isinstance(node.args[0], ast.Constant) and node.args[0].value == "entry"
+    return False
+
+
+def _entry_literal_values(node):
+    """`node` 是入口字面值（或其集合）⇒ 回那些值；否則 `None`。"""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        vals = {node.value}
+    elif isinstance(node, (ast.Tuple, ast.List, ast.Set)) and node.elts and all(
+            isinstance(e, ast.Constant) and isinstance(e.value, str) for e in node.elts):
+        vals = {e.value for e in node.elts}
+    else:
+        return None
+    return vals if vals & ENTRY_LITERALS else None
+
+
+def entry_literal_hits_in_tree(tree):
+    """回 `[(lineno, 片段)]`。"""
+    hits = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Compare):
+            continue
+        operands = [node.left] + list(node.comparators)
+        for i, op in enumerate(node.ops):
+            if not isinstance(op, _ENTRY_CMP_OPS):
+                continue
+            a, b = operands[i], operands[i + 1]
+            if (_is_entry_ref(a) and _entry_literal_values(b)) or (
+                    _is_entry_ref(b) and _entry_literal_values(a)):
+                try:
+                    snippet = ast.unparse(node)
+                except Exception:  # noqa: BLE001
+                    snippet = type(op).__name__
+                hits.append((node.lineno, snippet))
+                break
+    return hits
+
+
+def _entry_scan_rels(rag_root=None):
+    root = rag_root or RAG
+    rels = []
+    for top in ("services", "routers"):
+        base = os.path.join(root, top)
+        if not os.path.isdir(base):
+            continue
+        for dirpath, dirs, files in os.walk(base):
+            dirs[:] = sorted(d for d in dirs if d not in ("__pycache__", "tests"))
+            for fn in sorted(files):
+                if fn.endswith(".py") and not fn.startswith("test_"):
+                    rels.append(os.path.relpath(os.path.join(dirpath, fn), root))
+    if os.path.isfile(os.path.join(root, "app.py")):
+        rels.append("app.py")
+    return sorted(r for r in rels if r != ENTRY_LITERAL_ALLOWED_REL)
+
+
+def scan_28c_entry_literals(sources=None, rag_root=None):
+    """回 `(hits, scanned_rels, errors)`；`hits`＝`[(rel, lineno, 片段)]`。
+    `sources={rel: src}` 供自測植入（仍套用 identity.py／tests 排除規則）。"""
+    if sources is not None:
+        items = [(rel, src) for rel, src in sorted(sources.items())
+                 if rel != ENTRY_LITERAL_ALLOWED_REL
+                 and "/tests/" not in f"/{rel}" and not os.path.basename(rel).startswith("test_")]
+    else:
+        root = rag_root or RAG
+        items = [(rel, _read(os.path.join(root, rel))) for rel in _entry_scan_rels(root)]
+    hits, scanned, errors = [], [], []
+    for rel, src in items:
+        if src is None:
+            errors.append(f"{rel} 讀不到")
+            continue
+        tree = _parse(src)
+        if tree is None:
+            errors.append(f"{rel} 語法錯誤")
+            continue
+        scanned.append(rel)
+        for lineno, snippet in entry_literal_hits_in_tree(tree):
+            hits.append((rel, lineno, snippet))
+    return hits, scanned, errors
+
+
+#: 正對照：掃描面必含的檔（掃不到 ⇒ 掃描面搬家了，結論不可信）。
+_ENTRY_SCAN_MUST_INCLUDE = (FACADE_REL, "services/agent/runtime.py", "app.py")
+
+
+def check_28c_no_entry_literal_compare(sources=None, rag_root=None, must_include=None):
+    hits, scanned, errors = scan_28c_entry_literals(sources=sources, rag_root=rag_root)
+    if errors:
+        return False, "；".join(errors) + "——大聲失敗"
+    if not scanned:
+        return False, "掃到 0 個檔——掃描面路徑錯了，大聲失敗"
+    must = _ENTRY_SCAN_MUST_INCLUDE if must_include is None else must_include
+    lost = [m for m in must if m not in scanned]
+    if lost:
+        return False, f"掃描面缺 {'、'.join(lost)}（共掃 {len(scanned)} 檔）——大聲失敗"
+    if hits:
+        listed = "；".join(f"{rel}:{ln} `{snip}`" for rel, ln, snip in hits)
+        return False, (f"{ENTRY_LITERAL_ALLOWED_REL} 以外有 {len(hits)} 處 entry 字面比較"
+                       f"（改用 is_backend_entry()）：{listed}")
+    return True, f"掃 {len(scanned)} 檔（services/、routers/、app.py，不含 tests 與 identity.py），無 entry 字面比較"
 
 
 # ───────────────────────── 29（design 20）可見性謂詞單一來源 ─────────────────────────
@@ -544,14 +854,35 @@ def check_30_decision_snapshot_no_verbatim(paths=None, agent_root=None):
 
 # ───────────────────────── 31（design 22）/mcp 每呼叫一列 usage_events ─────────────────────────
 
-def check_31_mcp_usage_events_coverage(path="tests/integration/agent/test_mcp_facade_req.py"):
+#: 對話 API「每呼叫恰一列」的覆蓋測試（DSP-131 計畫 §5.2 第 5 項）。
+DIALOGUE_USAGE_TEST_REL = "tests/unit/agent/test_agent_dialogue_router_req.py"
+DIALOGUE_USAGE_TEST_FUNC = "test_each_dialogue_call_writes_exactly_one_row"
+
+
+def check_31_mcp_usage_events_coverage(path="tests/integration/agent/test_mcp_facade_req.py",
+                                       dialogue_path=DIALOGUE_USAGE_TEST_REL,
+                                       dialogue_func=DIALOGUE_USAGE_TEST_FUNC):
     """design 22：屬整合測試（任務 1.7 落地）。本 checker 只登記覆蓋
-    測試檔是否存在——不存在 ⇒ WARN（非 FAIL），避免在 1.7 完成前把
-    make audit 卡死在一條尚不該紅的規則上。"""
-    full = os.path.join(REPO, "rag-orchestrator", path)
-    if os.path.exists(full):
-        return True, f"由 {path} 覆蓋"
-    return None, f"{path} 不存在——WARN：/mcp 每呼叫一列 usage_events 待任務 1.7 落地，尚無測試覆蓋"
+    測試檔是否存在——`/mcp` 那份不存在 ⇒ WARN（非 FAIL），避免在 1.7 完成前把
+    make audit 卡死在一條尚不該紅的規則上。
+
+    DSP-131：`/mcp` 那份在 ⇒ 對話 API 那份也必須在，且含 `dialogue_func` 這支測試
+    （⛔ WARN：對話 API 已上線的路徑沒有理由「待落地」）。路徑以 `RAG` 解析（host 與
+    測試容器 `/app` 兩種佈局都對；原本以 `REPO` 拼，在容器內恆為 WARN）。"""
+    full = os.path.join(RAG, path)
+    if not os.path.exists(full):
+        return None, f"{path} 不存在——WARN：/mcp 每呼叫一列 usage_events 待任務 1.7 落地，尚無測試覆蓋"
+    src = _read(os.path.join(RAG, dialogue_path))
+    if src is None:
+        return False, f"{dialogue_path} 不存在——對話 API 每呼叫一列 usage_events 沒有測試覆蓋，大聲失敗"
+    tree = _parse(src)
+    if tree is None:
+        return False, f"{dialogue_path} 語法錯誤——大聲失敗"
+    funcs = {n.name for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+    if dialogue_func not in funcs:
+        return False, (f"{dialogue_path} 沒有 `{dialogue_func}`（掃到 {len(funcs)} 個函式）"
+                       "——對話 API 每呼叫一列的覆蓋被拿掉了，大聲失敗")
+    return True, f"/mcp 由 {path} 覆蓋；對話 API 由 {dialogue_path}::{dialogue_func} 覆蓋"
 
 
 # ───────────────────────── 32 內容已審謂詞單一來源（spec knowledge-outline-and-intent-architecture 3.1）─────────────────────────
@@ -779,6 +1110,8 @@ CHECKS = [
     (29, "可見性謂詞單一來源（design 20）", check_29_predicate_single_source),
     (30, "decision_snapshot.agent* 無原文鍵（design 21）", check_30_decision_snapshot_no_verbatim),
     ("29b", "canon 可見性單一來源（3.2）", check_29b_canon_visibility_single_source),
+    ("28b", "對話 API 路由不 import mcp.*（DSP-131）", check_28b_dialogue_router_no_mcp_import),
+    ("28c", "identity.py 以外無 entry 字面比較（DSP-131）", check_28c_no_entry_literal_compare),
 ]
 
 
@@ -839,7 +1172,195 @@ def _self_test_28():
             ("門面存在但乾淨 → 通過", facade_check([clean])[0] is True),
             ("門面出現 auth_enforced → 必須紅", facade_check([dirty])[0] is False),
         ]
+    cases += _self_test_28_dialogue_routes(good_auth)
     return cases
+
+
+_FAKE_FACADE_28 = (
+    'GATED_PREFIXES = ("/mcp", "/api/v1/agent")\n'
+    'DIALOGUE_TURN_PATH = "/api/v1/agent/turn"\n'
+    'DIALOGUE_UPLOAD_TICKET_PATH = "/api/v1/agent/upload-ticket"\n'
+)
+_FAKE_UPLOAD_28 = 'UPLOAD_PATH = "/api/v1/agent/uploads"\n'
+_FAKE_ROUTER_28 = (
+    "from fastapi import APIRouter\n"
+    "from services.agent import mcp_facade\n"
+    "def build_router(registry, deps):\n"
+    "    router = APIRouter()\n"
+    "    async def h(request):\n"
+    "        return request.headers.get('content-length')\n"
+    "    router.add_api_route(mcp_facade.DIALOGUE_TURN_PATH, h, methods=['POST'])\n"
+    "    router.add_api_route(mcp_facade.DIALOGUE_UPLOAD_TICKET_PATH, h, methods=['POST'])\n"
+    "    return router\n"
+)
+
+
+def _self_test_28_dialogue_routes(good_auth):
+    def run(router=_FAKE_ROUTER_28, facade=_FAKE_FACADE_28, upload=_FAKE_UPLOAD_28, auth=good_auth):
+        return check_28_mcp_auth_unconditional(auth_src=auth, facade_paths=[], router_src=router,
+                                               facade_src=facade, upload_src=upload)[0]
+
+    real_router = _read(os.path.join(RAG, DIALOGUE_ROUTER_REL))
+    return [
+        ("28 正對照：現況對話 API 路由檔存在、路徑在閘內（含真檔掃描）",
+         real_router is not None and check_28_mcp_auth_unconditional()[0] is True),
+        ("28 假樹：乾淨路由（用常數註冊、headers.get 不算路由）→ 通過", run() is True),
+        ("28 對話 API 路由檔不存在 → 必須紅（⛔ 略過）",
+         scan_28_dialogue_routes(None, _FAKE_FACADE_28, ("/docs",), _FAKE_UPLOAD_28)[0] != []),
+        ("28 路由用字串字面量註冊 → 必須紅",
+         run(router=_FAKE_ROUTER_28.replace("mcp_facade.DIALOGUE_TURN_PATH", "'/api/v1/agent/turn'"))
+         is False),
+        ("28 路由少註冊一條常數 → 必須紅",
+         run(router="\n".join(l for l in _FAKE_ROUTER_28.splitlines()
+                              if "UPLOAD_TICKET_PATH" not in l) + "\n") is False),
+        ("28 路由多一條 @router.post('/x') → 必須紅",
+         run(router=_FAKE_ROUTER_28.replace(
+             "    return router\n", "    router.post('/api/v1/agent/x')(h)\n    return router\n"))
+         is False),
+        ("28 找不到 APIRouter 賦值 → 必須紅",
+         run(router=_FAKE_ROUTER_28.replace("router = APIRouter()", "router = make()")) is False),
+        ("28 路徑不在 GATED_PREFIXES → 必須紅",
+         run(facade=_FAKE_FACADE_28.replace('"/api/v1/agent/turn"', '"/v1/agent/turn"')) is False),
+        ("28 路徑落在 _EXEMPT_PREFIX → 必須紅",
+         run(auth='_EXEMPT_PREFIX = ("/docs", "/api/v1/agent/turn")\n') is False),
+        ("28 路徑等於上傳豁免 UPLOAD_PATH → 必須紅",
+         run(upload='UPLOAD_PATH = "/api/v1/agent/upload-ticket"\n') is False),
+        ("28 門面缺路徑常數 → 必須紅",
+         run(facade='GATED_PREFIXES = ("/mcp", "/api/v1/agent")\n') is False),
+        ("28 門面缺 GATED_PREFIXES → 必須紅",
+         run(facade=_FAKE_FACADE_28.splitlines()[1] + "\n" + _FAKE_FACADE_28.splitlines()[2] + "\n")
+         is False),
+        ("28 auth_enforced 預設掃描清單含對話 API 路由檔",
+         DIALOGUE_ROUTER_REL in FACADE_AUTH_PATHS),
+        ("28 對話 API 路由檔出現 auth_enforced → 必須紅",
+         _router_with_auth_enforced_is_caught(good_auth)),
+    ]
+
+
+def _router_with_auth_enforced_is_caught(good_auth):
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "agent_dialogue.py")
+        with open(p, "w") as f:
+            f.write("from services.api_key_auth import auth_enforced\n" + _FAKE_ROUTER_28)
+        return check_28_mcp_auth_unconditional(
+            auth_src=good_auth, facade_paths=[p], router_src=_FAKE_ROUTER_28,
+            facade_src=_FAKE_FACADE_28, upload_src=_FAKE_UPLOAD_28)[0] is False
+
+
+def _self_test_28b():
+    good = _FAKE_ROUTER_28
+    real = check_28b_dialogue_router_no_mcp_import()
+    return [
+        ("28b 正對照：現況路由檔掃到 ≥1 個 import 且無 mcp.*", real[0] is True and "import" in real[1]),
+        ("28b 假檔乾淨 → 通過", check_28b_dialogue_router_no_mcp_import(src=good)[0] is True),
+        ("28b import mcp → 必須紅",
+         check_28b_dialogue_router_no_mcp_import(src="import mcp\n" + good)[0] is False),
+        ("28b from mcp.server.fastmcp import X → 必須紅",
+         check_28b_dialogue_router_no_mcp_import(
+             src="from mcp.server.fastmcp import Context\n" + good)[0] is False),
+        ("28b import mcp.types as t → 必須紅",
+         check_28b_dialogue_router_no_mcp_import(src="import mcp.types as t\n" + good)[0] is False),
+        ("28b 函式內 import mcp → 必須紅",
+         check_28b_dialogue_router_no_mcp_import(
+             src=good + "def f():\n    from mcp import types\n")[0] is False),
+        ("28b importlib.import_module('mcp.x') → 必須紅",
+         check_28b_dialogue_router_no_mcp_import(
+             src=good + "import importlib\nM = importlib.import_module('mcp.server')\n")[0] is False),
+        ("28b `import mcpx`／相對 `from .mcp import y` 不是 SDK → 通過",
+         check_28b_dialogue_router_no_mcp_import(
+             src="import mcpx\nfrom .mcp import y\n" + good)[0] is True),
+        ("28b 0 個 import → 必須紅", check_28b_dialogue_router_no_mcp_import(src="X = 1\n")[0] is False),
+        ("28b 檔案不存在 → 必須紅",
+         check_28b_dialogue_router_no_mcp_import(rel="routers/_does_not_exist.py")[0] is False),
+    ]
+
+
+def _self_test_28c():
+    must = ("services/x.py",)
+
+    def hit(src, rel="services/x.py"):
+        return check_28c_no_entry_literal_compare(sources={rel: src}, must_include=(rel,))[0] is False
+
+    bad_forms = [
+        ('if entry == "mcp":\n    pass\n', '`entry == "mcp"`'),
+        ('ok = identity.entry != "mcp"\n', '`.entry != "mcp"`'),
+        ('ok = getattr(identity, "entry", None) != "rest"\n', '`getattr(..., "entry") != "rest"`（對未知值放行）'),
+        ('ok = "mcp" == identity.entry\n', "字面值在左"),
+        ('ok = identity.entry in ("mcp", "dialogue")\n', "`in` tuple"),
+        ('ok = entry not in {"rest"}\n', "`not in` set"),
+        ('ok = state["entry"] == "dialogue"\n', '`x["entry"]`'),
+        ('ok = payload.get("entry") == "mcp"\n', '`x.get("entry")`'),
+        ('ok = entry is "mcp"\n', "`is`"),
+        ('ok = 0 < n and a < entry == "mcp"\n', "鏈式比較"),
+    ]
+    good_forms = [
+        ("ok = is_backend_entry(entry)\n", "is_backend_entry"),
+        ('f(entry="mcp")\n', "關鍵字引數不是比較"),
+        ('ok = channel == "mcp"\n', "非 entry 名字"),
+        ("ok = entry == DEFAULT_ENTRY_CHANNEL\n", "跟常數名比（非字面）"),
+        ('"""entry == "mcp" 只在 docstring"""\n', "docstring"),
+        ('ok = entry == "other"\n', "非入口字面值"),
+        ('M = {"mcp": 1}\nv = M[entry]\n', "查表"),
+    ]
+    hits_real, scanned_real, errors_real = scan_28c_entry_literals()
+    cases = [
+        ("28c 正對照：真樹掃描面 ≥20 檔、含 mcp_facade.py／runtime.py／app.py、讀檔無錯"
+         "（⛔ 不斷言真樹無命中——runtime.py 的處置屬併回，見 DSP-131）",
+         len(scanned_real) >= 20 and not errors_real
+         and all(m in scanned_real for m in _ENTRY_SCAN_MUST_INCLUDE)),
+        ("28c 正對照：真樹掃描面排除 identity.py 與 tests",
+         ENTRY_LITERAL_ALLOWED_REL not in scanned_real
+         and not any("/tests/" in f"/{r}" for r in scanned_real)),
+    ]
+    cases += [(f"28c 植入 {label} → 必須紅", hit(src)) for src, label in bad_forms]
+    cases += [(f"28c {label} → 不得誤報", not hit(src)) for src, label in good_forms]
+    cases += [
+        ("28c identity.py 內的字面比較 → 豁免",
+         check_28c_no_entry_literal_compare(
+             sources={ENTRY_LITERAL_ALLOWED_REL: 'ok = entry == "mcp"\n', "services/x.py": "X = 1\n"},
+             must_include=must)[0] is True),
+        ("28c tests 內的字面比較 → 不掃",
+         check_28c_no_entry_literal_compare(
+             sources={"services/agent/tests/test_x.py": 'ok = entry == "mcp"\n',
+                      "services/x.py": "X = 1\n"}, must_include=must)[0] is True),
+        ("28c 掃描面缺必含檔 → 必須紅",
+         check_28c_no_entry_literal_compare(sources={"services/x.py": "X = 1\n"},
+                                            must_include=("app.py",))[0] is False),
+        ("28c 0 個檔 → 必須紅", check_28c_no_entry_literal_compare(sources={}, must_include=())[0] is False),
+        ("28c 語法錯誤 → 必須紅",
+         check_28c_no_entry_literal_compare(sources={"services/x.py": "def (:\n"},
+                                            must_include=must)[0] is False),
+        ("28c 命中列出 file:line",
+         "services/x.py:2" in check_28c_no_entry_literal_compare(
+             sources={"services/x.py": 'X = 1\nok = entry != "rest"\n'}, must_include=must)[1]),
+    ]
+    return cases
+
+
+def _self_test_31():
+    with tempfile.TemporaryDirectory() as td:
+        base = os.path.join(td, "test_mcp_facade_req.py")
+        with open(base, "w") as f:
+            f.write("def test_x():\n    pass\n")
+        dlg = os.path.join(td, "test_dialogue.py")
+        with open(dlg, "w") as f:
+            f.write(f"async def {DIALOGUE_USAGE_TEST_FUNC}():\n    pass\n")
+        dlg_wo = os.path.join(td, "test_dialogue_wo.py")
+        with open(dlg_wo, "w") as f:
+            f.write("async def test_other():\n    pass\n")
+        nope = os.path.join(td, "nope.py")
+        real = check_31_mcp_usage_events_coverage()
+        return [
+            ("31 正對照：現況兩份覆蓋測試都在（RAG 解析，容器內也算得到）", real[0] is True),
+            ("31 /mcp 覆蓋檔不存在 → WARN（None）",
+             check_31_mcp_usage_events_coverage(path=nope, dialogue_path=dlg)[0] is None),
+            ("31 對話 API 覆蓋檔不存在 → 必須紅",
+             check_31_mcp_usage_events_coverage(path=base, dialogue_path=nope)[0] is False),
+            ("31 對話 API 覆蓋檔缺該測試函式 → 必須紅",
+             check_31_mcp_usage_events_coverage(path=base, dialogue_path=dlg_wo)[0] is False),
+            ("31 兩份都在且含該函式 → 通過",
+             check_31_mcp_usage_events_coverage(path=base, dialogue_path=dlg)[0] is True),
+        ]
 
 
 def _self_test_29():
@@ -1122,6 +1643,9 @@ def self_test() -> int:
     all_cases = []
     all_cases += _self_test_27()
     all_cases += _self_test_28()
+    all_cases += _self_test_28b()
+    all_cases += _self_test_28c()
+    all_cases += _self_test_31()
     all_cases += _self_test_29()
     all_cases += _self_test_29b()
     all_cases += _self_test_30()
@@ -1149,9 +1673,9 @@ def main() -> int:
             fail = True
     ok31, detail31 = check_31_mcp_usage_events_coverage()
     if ok31 is None:
-        print(f"⚠️  不變量 31：/mcp 每呼叫一列 usage_events（design 22）—— {detail31}")
+        print(f"⚠️  不變量 31：/mcp 與對話 API 每呼叫一列 usage_events（design 22）—— {detail31}")
     else:
-        print(f"{'✅' if ok31 else '❌'} 不變量 31：/mcp 每呼叫一列 usage_events（design 22）—— {detail31}")
+        print(f"{'✅' if ok31 else '❌'} 不變量 31：/mcp 與對話 API 每呼叫一列 usage_events（design 22）—— {detail31}")
         fail = fail or (not ok31)
     try:
         ok32, detail32 = check_32_review_state_single_source()

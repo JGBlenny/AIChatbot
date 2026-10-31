@@ -1278,7 +1278,9 @@ def _write_registry(*, write_result=None) -> ToolRegistry:
 
 
 @pytest.mark.req(_REQ)
-async def test_document_turn_hides_the_write_face_from_the_model():
+async def test_document_turn_hides_the_write_face_from_the_model(monkeypatch):
+    # 寫入改接片 W8：寫入工具只給站內幫手金鑰 ⇒ 本檔身分的金鑰 id 列入（正對照仍看得到，期望值不變）。
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", str(API_KEY_ID))
     registry = _write_registry()
     provider = FakeProvider([_final_response()])
     runtime = _runtime(provider, registry=registry)

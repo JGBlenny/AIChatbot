@@ -16,6 +16,7 @@ import os
 import re
 import logging
 from typing import Any, Optional
+from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
 from services.jgb.contract_fixtures import ContractFixtureTable
@@ -38,6 +39,8 @@ from services.jgb.transport import (  # noqa: F401  (FALLBACK_MESSAGE 對外沿�
     Transport,
     TransportResponse,
     UnexpectedRealNetworkError,
+    WRITE_METHODS,
+    mock_write_failure,
 )
 
 logger = logging.getLogger(__name__)
@@ -82,6 +85,35 @@ def _ymd_dash(value: Any) -> Optional[str]:
     return None
 
 
+#: 寫入改接片 W1：開關 env 名。只收 `on`（去空白後逐字相等）；空、未設、其他值一律 off（fail-closed）。
+JGB_WRITE_WIRING_ENV = "JGB_WRITE_WIRING"
+#: W1：開關 on 只在這個主機（或替身模式）生效——只對過 staging（jgb2 `origin/staging` `544e8592eb`）的契約；
+#: 連 www 或其他主機時當 off（www 跑 master，沒有這些寫入端點）。
+WRITE_WIRING_HOST = "staging.jgbsmart.com"
+
+
+def _write_wiring_from_env(api_base_url: str, use_mock: bool) -> bool:
+    """W1 唯一讀值點：`JGB_WRITE_WIRING` == `on` 且（替身模式或 base URL 主機＝staging）⇒ True。
+
+    開關 on 但主機不符 ⇒ False，記一行警告（⛔ 印 URL 全文或任何憑證）。"""
+    raw = os.getenv(JGB_WRITE_WIRING_ENV)
+    if not isinstance(raw, str) or raw.strip() != "on":
+        return False
+    if use_mock:
+        return True
+    try:
+        host = (urlparse(api_base_url).hostname or "").lower()
+    except (TypeError, ValueError):
+        host = ""
+    if host == WRITE_WIRING_HOST:
+        return True
+    logger.warning(
+        "%s=on 但 JGB_API_BASE_URL 主機不是 %s ⇒ 寫入改接當 off（五項寫入維持現行行為）",
+        JGB_WRITE_WIRING_ENV, WRITE_WIRING_HOST,
+    )
+    return False
+
+
 def _add_months(day: datetime.date, months: int) -> datetime.date:
     """日期加 N 個月；目標月沒有該日就取當月最後一天（1/31 + 1 月 ＝ 2/28 或 2/29）。"""
     index = day.month - 1 + months
@@ -99,6 +131,9 @@ class JGBSystemAPI:
         self.api_key = os.getenv("JGB_API_KEY", "")
         self.use_mock = os.getenv("USE_MOCK_JGB_API", "true").lower() == "true"
         self.timeout = 10.0
+        #: 寫入改接片 W1：只讀一次、存成這個屬性；各閘門點（`confirm.py`、`action.py`、本檔三處、
+        #: transport）都只讀它。⛔ 在別處再讀 env。
+        self.write_wiring: bool = _write_wiring_from_env(self.api_base_url, self.use_mock)
 
         # 任務 4.1：只依賴 Transport Protocol，不直接碰 httpx。
         # mock transport 於 4.2–4.5 裝配；在那之前 mock 模式**不會**走到 _send
@@ -113,7 +148,8 @@ class JGBSystemAPI:
         # `use_mock` 分支根本不碰它），⛔ 不為了「欄位總是有值」而先建一個。
         self._real_transport: Optional[Transport] = (
             None if self.use_mock
-            else RealHttpTransport(self.api_base_url, self.api_key, self.timeout)
+            else RealHttpTransport(self.api_base_url, self.api_key, self.timeout,
+                                   write_wiring=self.write_wiring)
         )
         #: 4.3：mock 模式裝配替身；fixture 表由 4.4 提供，未裝配前「已遷移」端點
         #: 一律 MissingFixtureError——**任何失敗都不會退回 real transport**。
@@ -147,6 +183,10 @@ class JGBSystemAPI:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    def _wiring_on(self) -> bool:
+        """W1：本物件的開關值（`write_wiring` 屬性）；沒有屬性或不是 `True` ⇒ off（fail-closed）。"""
+        return getattr(self, "write_wiring", False) is True
 
     @staticmethod
     def _validate_identity(role_id: Optional[str], user_id: Optional[str]) -> bool:
@@ -188,9 +228,14 @@ class JGBSystemAPI:
                 raise UnexpectedRealNetworkError(
                     f"use_mock=True 但未裝配 mock transport：{method} {path}"
                 )
-            return await self._mock_transport.send(
+            resp = await self._mock_transport.send(
                 method, path, params=params, data=data, **extra
             )
+            if self._wiring_on() and method in WRITE_METHODS:
+                # 寫入改接片 W6／W7：替身路徑與 `RealHttpTransport` 同一套失敗分類（錯誤碼放 `error.reason`，
+                # 訊息換固定句）；off 時回應逐字不動。
+                return mock_write_failure(method, path, resp)
+            return resp
         if self._real_transport is None:
             # 只有「建構時是 mock、事後被改成 real」才會走到這裡（測試替身）。
             # ⛔ 不在此臨時建一個 real transport——那等於繞過建構期的憑證守門。
@@ -649,8 +694,17 @@ class JGBSystemAPI:
         if idempotency_key:
             data["idempotency_key"] = idempotency_key
         if not self.use_mock:
-            # 真 JGB `POST /repairs` 的 `broken_photos.*` 只收 URL（上傳檔案會 422），目前沒有可送的照片通道：
-            # ⛔ 不送檔、⛔ 不送中繼資料；使用者在確認前已被告知照片暫時無法附上（見 confirm.py 的卡片提示）。
+            if self._wiring_on() and photo_files:
+                # 寫入改接片 W4（API 規格 #22；jgb2 `origin/staging` `544e8592eb`
+                # `RepairController::collectBrokenPhotos`）：照片以 multipart `broken_photos[]` 檔案送，
+                # 其餘欄位用與 JSON 相同的鍵當表單欄位（`ExternalWriteGuard::bodyParams` 非 JSON 時取表單）。
+                # `photo_files` 只來自 `action._card_photo_files`（綁定欄、重算 sha256 對卡上值、JPEG 判型）。
+                form = {k: str(v) for k, v in data.items() if v is not None}
+                files = [("broken_photos[]", (name, content, ctype))
+                         for name, content, ctype in photo_files]
+                return await self._send("POST", "/api/external/v1/repairs", data=form, files=files)
+            # 開關 off：真 JGB 分支照舊——⛔ 不送檔、⛔ 不送中繼資料；使用者在確認前已被告知
+            # 照片暫時無法附上（見 confirm.py 的卡片提示）。
             return await self._post_request("/api/external/v1/repairs", data)
         if photo_files:
             form = {k: str(v) for k, v in data.items() if v is not None}
@@ -680,8 +734,27 @@ class JGBSystemAPI:
         `date_expire`：`YYYY-MM-DD`。⛔ 不接受位移天數：使用者確認的是一個確定的
         日期，位移在下游重算一次就多一個「算出不同結果」的機會。
 
-        ⚠️ **只有替身 transport 走得通**（`USE_MOCK_JGB_API=true`）：接真 JGB 一律不發請求（JGB 無此路由）。
+        ⚠️ 開關 off：**只有替身 transport 走得通**（`USE_MOCK_JGB_API=true`）：接真 JGB 一律不發請求。
+
+        **寫入改接片 W3**（`write_wiring` on）：改打 JGB staging 的 `PATCH /api/external/v1/bills/{id}`
+        （jgb2 `origin/staging` `544e8592eb` `BillController::updateDueDate`，`DUE_FIELDS = ['date_expire']`）：
+        body 只送 `date_expire`＋`role_id`＋`viewer_user_id`＋`idempotency_key`（`ExternalWriteGuard`
+        `ALWAYS_ALLOWED_FIELDS`）；⛔ 送 `due_date`／`due_date_shift_days`／`confirmation_token`（白名單外 422）。
+        `bill_id` 送出前必須是純數字，否則不發請求（回固定降級）。
         """
+        if self._wiring_on():
+            ref = str(bill_id).strip() if isinstance(bill_id, (str, int)) and not isinstance(bill_id, bool) else ""
+            if not (ref.isascii() and ref.isdigit()):
+                logger.warning("PATCH /api/external/v1/bills/{bill_id}：bill_id 不是純數字 ⇒ 不發請求")
+                return self._fallback_response("bill_id is not numeric")
+            wired: dict[str, Any] = {"date_expire": date_expire}
+            if role_id:
+                wired["role_id"] = role_id
+            if user_id:
+                wired["viewer_user_id"] = user_id
+            if idempotency_key:
+                wired["idempotency_key"] = idempotency_key
+            return await self._patch_request(f"/api/external/v1/bills/{ref}", wired)
         if not self.use_mock:
             # JGB 沒有 `PATCH /agent/v1/bills/{id}` 這條路由（external/v1 只有讀取與 POST /repairs 等），
             # 接真 JGB ⇒ 不發請求。正常情況下 `confirm.py` 在出確認卡前就已攔下（`WRITE_NOT_SUPPORTED_ACTIONS`），
@@ -855,7 +928,9 @@ class JGBSystemAPI:
     ) -> dict[str, Any]:
         if not self._validate_identity(role_id, user_id):
             return self._degraded_response()
-        if not self.use_mock:
+        # 寫入改接片 W2：開關 on ⇒ 接真 JGB 也送出（staging `544e8592eb` 已有 #19～#21 三條路由）；
+        # off ⇒ 照舊不發請求。
+        if not self.use_mock and not self._wiring_on():
             return self._proposed_not_available(req)
         # 身分鍵一律放最後覆寫：`fields` 裡夾帶的 role_id／viewer_user_id／user_id 不會蓋過登入身分；
         # 成員身分的鍵名是 `viewer_user_id`（JGB `ExternalViewerScope` 只認這個）。

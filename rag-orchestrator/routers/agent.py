@@ -101,10 +101,13 @@ def _make_vendor_check(pool):
 
 
 async def _require_identity(request: Request, key: dict, pool) -> "mcp_facade.Identity":
-    """`X-JGB-Identity` 必帶（缺／壞 400、越權 403）——⛔ 不給預設身分。"""
+    """`X-JGB-Identity` 必帶（缺／壞 400、越權 403）——⛔ 不給預設身分。
+
+    `entry="mcp"`（DSP-131 必填）：本檔端點是 MCP 門面的輔助端點，入口語義與改版前相同。
+    """
     try:
         return await mcp_facade.parse_identity(
-            request.headers, key=key, vendor_check=_make_vendor_check(pool)
+            request.headers, key=key, vendor_check=_make_vendor_check(pool), entry="mcp"
         )
     except mcp_facade.McpRequestError as e:
         raise HTTPException(status_code=e.status, detail=e.code) from None
@@ -220,7 +223,7 @@ async def agent_openapi(request: Request):
 
     try:
         identity = await mcp_facade.parse_identity(
-            request.headers, key=key, vendor_check=_make_vendor_check(pool)
+            request.headers, key=key, vendor_check=_make_vendor_check(pool), entry="mcp"
         )
     except mcp_facade.McpRequestError as e:
         raise HTTPException(status_code=e.status, detail=e.code) from None

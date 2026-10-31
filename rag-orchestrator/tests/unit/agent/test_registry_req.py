@@ -31,6 +31,12 @@ async def _ok_fn(identity, args):
     return ToolResult(ok=True, data={"echo": args}, text_for_model="ok")
 
 
+@pytest.fixture(autouse=True)
+def _assistant_key(monkeypatch):
+    """寫入改接片 W8：寫入工具只給站內幫手金鑰 ⇒ 本檔身分的金鑰 id 列入 `AGENT_ASSISTANT_KEY_IDS`（期望值不變）。"""
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "1")
+
+
 def _identity(target_user, *, mode="b2c", api_key_id=1, vendor_id=1, session_id="s1",
               entry="mcp"):
     """⚠️ `entry` **預設 `"mcp"`**（DSP-038-1／W1b）：本檔驗的是 audience×stage

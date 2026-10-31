@@ -43,6 +43,12 @@ def _freeze_today(monkeypatch):
     monkeypatch.setattr(_bills, "_today", lambda: _date(2026, 8, 15))
 
 
+@pytest.fixture(autouse=True)
+def _assistant_key(monkeypatch):
+    """寫入改接片 W8：寫入工具只給站內幫手金鑰 ⇒ 本檔身分的金鑰 id 列入 `AGENT_ASSISTANT_KEY_IDS`（期望值不變）。"""
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "1")
+
+
 _REQ = "agentic-mcp-orchestration:R4.2"
 
 #: demo fixture 的既有資料（`services/jgb/fixture_data/demo_vendor4.json`）：
@@ -152,7 +158,7 @@ def test_register_rejects_write_tool_without_mcp_only():
     reg.register({**spec, "mcp_only": True}, lambda *_a, **_k: None)
     assert "jgb2.action.forgot_mcp_only" in {
         s["name"] for s in reg.specs_for(
-            Identity(vendor_id=1, target_user="tenant", mode="b2c", entry="mcp"),
+            Identity(vendor_id=1, target_user="tenant", mode="b2c", entry="mcp", api_key_id=1),
             "M4", for_model=True)
     }
 
@@ -167,11 +173,11 @@ def test_write_tool_hidden_from_rest_entry_even_if_mcp_only_missing_in_spec_dict
         "input_schema": {"type": "object", "properties": {}},
         "scope": "write", "stage": {"tenant": "M4"},
     }
-    rest = Identity(vendor_id=1, target_user="tenant", mode="b2c")   # entry 落 "rest"
+    rest = Identity(vendor_id=1, target_user="tenant", mode="b2c", api_key_id=1)   # entry 落 "rest"
     assert "jgb2.action.smuggled" not in {
         s["name"] for s in reg.specs_for(rest, "M4", for_model=True)}
     # 正對照組：同一支工具對 mcp 入口可見 ⇒ 上面看不見是**入口**擋的
-    mcp = Identity(vendor_id=1, target_user="tenant", mode="b2c", entry="mcp")
+    mcp = Identity(vendor_id=1, target_user="tenant", mode="b2c", entry="mcp", api_key_id=1)
     assert "jgb2.action.smuggled" in {
         s["name"] for s in reg.specs_for(mcp, "M4", for_model=True)}
 

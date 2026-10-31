@@ -167,6 +167,7 @@ def world(monkeypatch):
     monkeypatch.delenv("AGENT_WRITE_DRAFT", raising=False)
     monkeypatch.delenv(WF.WRITE_LIFECYCLE_ENV, raising=False)          # 未設＝on
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "1")   # 寫入改接片 W8：身分的金鑰 id 列入（期望值不變）
     lookup = _Lookups()
     # ── 登錄（#2 允許的四份＋自建 registry）──────────────────────────────
     monkeypatch.setitem(WF.FORMS, FAKE, _fake_form(lookup))

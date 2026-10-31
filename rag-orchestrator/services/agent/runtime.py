@@ -72,6 +72,7 @@ from services import usage_metering
 from services.agent.agent_session import (
     DOCUMENT_CARRY_MAX_TURNS,
     HANDOFF_CACHE_KEY,
+    WRITE_DRAFT_KEY,
     AgentSession,
 )
 from services.agent.budget import Budget, BudgetCounters
@@ -92,6 +93,10 @@ from services.agent.confirm_card import (
     PHOTOS_UNAVAILABLE_KEY,
     RECEIPT_DATE_HINT_TEMPLATE,
     REPAIR_PHOTOS_MAX,
+    WRITE_RESULT_FAILED,
+    WRITE_RESULT_KEY,
+    WRITE_RESULT_TEXTS,
+    WRITE_RESULT_UNCONFIRMED,
     fields_before_today,
     receipt_id_of,
     render_receipt,
@@ -118,6 +123,7 @@ from services.agent.identity import (
     Identity,
     Stage,
     derive_identity_source,
+    is_backend_entry,
 )
 from services.agent.mcp_facade import current_stage
 from services.agent.outline import (
@@ -172,9 +178,11 @@ from services.agent.tools.confirm import (
     pending_token_state,
     redeem_pending,
     sha256_hex,
+    write_wiring_on as _write_wiring_on,
 )
 from services.agent import llm_output as LO
 from services.agent import write_forms as WF
+from services.agent import fill_values as FV
 from services.agent import write_candidates as _wc
 from services.agent import name_match as NM
 from services.agent import state_claim as SC
@@ -656,6 +664,43 @@ PENDING_PHOTOS_RELEASED_KEY = "photos_released"
 _PHOTO_SUGGESTION_FIELDS = ("category_name", "item", "reason", "description", "parent_category_name")
 #: 兌現時照片不可用的收據錯誤碼（只在 `pending["receipt"]`，⛔ 進 `ToolError` 值域）。
 PHOTOS_UNAVAILABLE_RECEIPT_ERROR = "PHOTOS_UNAVAILABLE"
+#: 寫入改接片 W7：開關 on 時兌現段呼叫**寫入工具**的工具逾時（秒）。須大於寫入 HTTP 逾時
+#: （multipart 60 秒）加兌現前的範圍讀；其他工具維持 `tool_timeout_s`。off ⇒ 不用（與改動前相同）。
+WRITE_TOOL_TIMEOUT_S = 90.0
+
+
+def _redeem_wiring_on() -> bool:
+    """寫入改接開關（W1）；取不到 API（測試替身、建構失敗）⇒ off（fail-closed，行為同改動前）。"""
+    try:
+        return _write_wiring_on() is True
+    except Exception:  # noqa: BLE001 — 開關判讀失敗一律當 off
+        return False
+
+
+def _registry_is_write_tool(registry: Any, tool_name: str) -> bool:
+    """registry 宣告的寫入工具（spec `scope == "write"`）；替身沒有 `is_write_tool` ⇒ 否。"""
+    probe = getattr(registry, "is_write_tool", None)
+    if not callable(probe):
+        return False
+    try:
+        return probe(tool_name) is True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _write_result_code(tool_result: Any) -> str:
+    """兌現段寫入工具 `ok=False` ⇒ 封閉錯誤碼（W6／W7，開關 on 才用）。
+
+    工具判出的碼（`data[WRITE_RESULT_KEY]`，須在封閉值域內）優先；工具逾時 `TOOL_TIMEOUT`
+    ⇒ `unconfirmed`（請求可能已送到 JGB）；其他（送出前就失敗）⇒ `failed`。"""
+    data = getattr(tool_result, "data", None)
+    if isinstance(data, dict):
+        code = data.get(WRITE_RESULT_KEY)
+        if isinstance(code, str) and code in WRITE_RESULT_TEXTS:
+            return code
+    if getattr(tool_result, "error", None) == "TOOL_TIMEOUT":
+        return WRITE_RESULT_UNCONFIRMED
+    return WRITE_RESULT_FAILED
 V_PHOTOS_CARRIED = "card_photos_carried"
 V_PHOTOS_UNAVAILABLE_AT_REDEEM = "photos_unavailable_at_redeem"
 
@@ -2253,6 +2298,27 @@ class _WriteDraftTurn:
     #: `picked` 為 `None`（意圖呼叫走 `pick_rule=True`、接 `DATA_TEXTS_PICK_NOTE` 的同一組狀態）。`_fill_begin_intent_call`
     #: 在送出意圖呼叫之前設一次。
     pick_list_open: bool = field(default=False, repr=False)
+    # ── 填欄結構化（plan-fill-structured-20261030 S1～S6；`AGENT_FILL_STRUCTURED` on 才會設）。全部只活在本回合
+    #    （⛔ 落地；`repr` 不帶，值可能是使用者資料）。──
+    #: S2／S3 共用的今天（本回合唯一一次 `bills._today()`，`_fill_begin_intent_call` 設）。
+    fs_today: Optional[date] = field(default=None, repr=False)
+    #: S2 指令欄（`WF.intent_fill_command` 的結果；意圖結果沒到 ⇒ `None`）與 `correct_keys`（只留該動作 user_words 鍵）。
+    fs_command: Optional[str] = field(default=None, repr=False)
+    fs_correct_keys: tuple = field(default=(), repr=False)
+    #: 本回合意圖結果已解析成功（含 `action=none`）。
+    fs_intent_seen: bool = field(default=False, repr=False)
+    #: S3 本回合不收的欄（表單鍵，依序；`bill_id` 等選定紀錄欄不列——那欄由候選流程重列）。
+    fs_rejected: list = field(default_factory=list, repr=False)
+    #: S4 本回合要問的待換請求（`WF.new_fill_switch` 形狀）；回合由 `_fill_structured_exit` 出確認句與兩顆按鈕。
+    fs_switch_ask: Optional[dict] = field(default=None, repr=False)
+    #: S6：本回合主模型提議的動作與目前草稿不同（草稿不換；意圖結果沒有同動作的換單請求時出 S4，值一律不帶）。
+    fs_proposal_switch: Optional[str] = field(default=None, repr=False)
+    #: S6：本回合由主模型提議開的空草稿（沒有值、還沒出卡）——意圖結果是另一支動作 ⇒ 直接取代（不出 S4）。
+    fs_proposal_empty: bool = field(default=False, repr=False)
+    #: S4 覆寫：`(鍵, 舊值, 新值)`，卡外列「欄：舊 → 新」（不進卡、不進雜湊）。
+    fs_overwrites: list = field(default_factory=list, repr=False)
+    #: S4：本回合是 `switch:yes` 按鈕換單（⛔ 呼叫主模型；程式依新草稿觸發或追問）。
+    fs_switch_button: bool = field(default=False, repr=False)
 
 
 def _write_intent_needs_retry(resp: Any) -> bool:
@@ -2388,6 +2454,21 @@ def _write_draft_owner(identity: Any) -> str:
     下一回合身分與它不同 ⇒ 清掉草稿。"""
     audience = identity.resolved_audience() if hasattr(identity, "resolved_audience") else None
     return f"{audience}|{getattr(identity, 'role_id', None)}|{getattr(identity, 'user_id', None)}"
+
+
+#: 填欄結構化 S2：回合開始時草稿形狀不合（`load_draft` 判 invalid）的簽章——回合開頭會整份丟棄 ⇒ 算草稿結束。
+_FS_SIG_INVALID: tuple = ("<invalid>",)
+
+
+def _fs_draft_signature(raw: Any) -> Optional[tuple]:
+    """S2 截點用的草稿簽章：沒有草稿 ⇒ `None`；形狀不合 ⇒ `_FS_SIG_INVALID`；否則 `(動作, 建立者)`。
+    只看形狀（`WF.load_draft`），⛔ 值。"""
+    if raw is None:
+        return None
+    draft, invalid = WF.load_draft(raw)
+    if invalid or draft is None:
+        return _FS_SIG_INVALID
+    return (draft["action"], draft["created_by_role"])
 
 
 def _write_draft_user_texts(agent_state: dict, user_message: str) -> list:
@@ -2630,7 +2711,8 @@ def _name_lenient_typed_turn(wd: Any) -> bool:
     `pick:`／`select:` 機器值、不是確認／修改／取消機器值（`_parse_confirm_value`），且非空白。
     只有 `True` 時 (乙) 缺名稱觸發才可能發生。"""
     msg = getattr(wd, "user_message", None)
-    if getattr(wd, "pick_button", False) or not isinstance(msg, str) or not msg.strip():
+    if (getattr(wd, "pick_button", False) or getattr(wd, "fs_switch_button", False)
+            or not isinstance(msg, str) or not msg.strip()):
         return False
     return (_parse_confirm_value(msg) is None and _wc.parse_pick_value(msg) is None
             and _parse_select_value(msg) is None)
@@ -2885,6 +2967,29 @@ class AgentRuntime:
         except ValueError as exc:
             logger.error("agent_runtime_config_invalid %s", exc)
             raise
+        # 填欄結構化（plan-fill-structured-20261030 §6 開關解析）：`AGENT_FILL_STRUCTURED`——只有 `on` 啟動；未設、空字串
+        # 或 `off`＝off；其他值 ⇒ 建構期 `ValueError`。on 要求寫入草稿、生命週期、提議、收尾轉人四個開關全 on（安審二 N2），
+        # 否則建構期 `ValueError`（app 啟動時 agent 路徑已啟用 ⇒ `_init_agent_runtime` 轉成啟動紅）。
+        # on 時 S1～S6 取代 `AGENT_FILL_DATA_TEXT`、`AGENT_FILL_DATA_TEXT_WIDE` 在適用回合的行為；off ⇒ 與改前逐字相同。
+        try:
+            self._fill_structured_on: bool = WF.fill_structured_enabled_from_env()
+        except ValueError as exc:
+            logger.error("agent_runtime_config_invalid %s", exc)
+            raise
+        if self._fill_structured_on:
+            prereq = {
+                WF.WRITE_DRAFT_ENV: self._write_draft_on,
+                WF.WRITE_LIFECYCLE_ENV: self._write_lifecycle_on,
+                WF.WRITE_PROPOSAL_ENV: self._write_proposal_on,
+                WF.CLOSING_HANDOFF_ENV: self._closing_handoff_on,
+            }
+            off = [name for name, on in prereq.items() if not on]
+            if off:
+                exc = ValueError(
+                    f"{WF.FILL_STRUCTURED_ENV}=on 需要 {'、'.join(WF.FILL_STRUCTURED_PREREQ_ENVS)} 全 on"
+                    f"（目前 off：{'、'.join(off)}）")
+                logger.error("agent_runtime_config_invalid %s", exc)
+                raise exc
         # W1b（§8.6-3b）：進行中的意圖判斷呼叫，依 `trace_id` 登記——`_finish_confirm_turn` 組
         # `TurnTrace(` 前據此收尾（那一支只拿得到 `trace_id`）；收尾即移除，回合以例外離開時
         # 由 `_run_turn_body` 撤掉（`_WriteIntentCall.abort`）。
@@ -3307,7 +3412,7 @@ class AgentRuntime:
         """使用者從 LIFF 清單點一列時的整段處理；不是這種回合 ⇒ `None`（照常進模型）。
 
         **守門順序與確認段完全相同，⛔ 不得調換**（Plan W8）：
-          ① `identity.entry != "mcp"` ⇒ 整段不執行（REST 入口沒有清單點選）。
+          ① 非後端入口（`is_backend_entry()` 為假，DSP-131）⇒ 整段不執行（REST 入口沒有清單點選）。
           ② `self.readonly_view` ⇒ 整段不執行。影子回合與正式回合共用
              `session_id`（DSP-016），影子若寫槽位／作廢待確認筆，正式那一邊
              就被影子改掉了，而使用者根本沒點過任何東西。
@@ -3317,7 +3422,7 @@ class AgentRuntime:
         程式產出。⛔ 這不代表沒有出口檢查——facts 出去之前還要再過一次
         `_verify_routes`（見下方），而 email 面由 `_SELECT_DEFAULT_FACE` 封閉表擋。
         """
-        if getattr(identity, "entry", DEFAULT_ENTRY_CHANNEL) != "mcp":
+        if not is_backend_entry(getattr(identity, "entry", DEFAULT_ENTRY_CHANNEL)):
             return None
         if self.readonly_view:
             return None
@@ -3472,7 +3577,7 @@ class AgentRuntime:
         """使用者按下三顆按鈕之一時的整段處理；不是這種回合 ⇒ `None`（照常進模型）。
 
         **守門順序固定，⛔ 不得調換**（Plan W3）：
-          ① `identity.entry != "mcp"` ⇒ 整段不執行。REST 入口永遠兌現不了——
+          ① 非後端入口（`is_backend_entry()` 為假，DSP-131）⇒ 整段不執行。REST 入口永遠兌現不了——
              它的 session 沒有命名空間、token 表也沒有 vendor 欄（S-6／S-7），
              這個 `entry` 判斷就是那兩條 DEFER 的緩解本身。
           ② `self.readonly_view` ⇒ 整段不執行。影子回合與正式回合**共用
@@ -3487,7 +3592,7 @@ class AgentRuntime:
         **模型不在迴圈裡**：這一段從頭到尾沒有一次 `chat.completions.create`。
         使用者按的是機器值，該執行什麼由狀態決定，⛔ 不由模型判讀同意詞（R4.2）。
         """
-        if getattr(identity, "entry", DEFAULT_ENTRY_CHANNEL) != "mcp":
+        if not is_backend_entry(getattr(identity, "entry", DEFAULT_ENTRY_CHANNEL)):
             return None
         if self.readonly_view:
             return None
@@ -3700,6 +3805,12 @@ class AgentRuntime:
         violations: list[str] = []
         call_start = self._clock()
         tool_name = f"jgb2.action.{action}"
+        # 寫入改接片 W7：開關 on 且是寫入工具 ⇒ 工具逾時拉長到 `WRITE_TOOL_TIMEOUT_S`（大於寫入 HTTP
+        # 逾時＋前置讀取），避免 3 秒就切斷一個其實已送到 JGB 的請求；off ⇒ 與改動前相同。
+        wiring_on = _redeem_wiring_on()
+        call_timeout_s = self._tool_timeout_s
+        if wiring_on and _registry_is_write_tool(self.registry, tool_name):
+            call_timeout_s = max(self._tool_timeout_s, WRITE_TOOL_TIMEOUT_S)
         try:
             # ⚠️ token 只在這一格行程內出現：從 `redemption` 直接進參數，
             #    ⛔ 不寫回 `pending`、⛔ 不進 trace／log／模型上下文。
@@ -3707,7 +3818,7 @@ class AgentRuntime:
                 identity,
                 tool_name,
                 {"payload": payload, "confirmation_token": redemption.token},
-                self._tool_timeout_s,
+                call_timeout_s,
                 stage=self._stage,
                 readonly_view=False,
                 for_model=True,
@@ -3737,6 +3848,15 @@ class AgentRuntime:
                 _clear_draft_on_close()
                 return _finish(PHOTO_REUPLOAD_TEXT, tool_calls=records,
                                violations=violations + [V_PHOTOS_UNAVAILABLE_AT_REDEEM],
+                               outcome=make_outcome("failed", expects="none",
+                                                    action=pending.get("action")))
+            if wiring_on:
+                # 寫入改接片 W6／W7：receipt 錯誤碼是封閉值域，句子依碼查 `WRITE_RESULT_TEXTS`
+                # （程式常數，⛔ 經 `text_for_model`）；同一張卡重按由 `_answer_for_receipt` 查同一張表。
+                code = _write_result_code(tool_result)
+                pending["receipt"] = {"error": code}
+                _clear_draft_on_close()
+                return _finish(WRITE_RESULT_TEXTS[code], tool_calls=records, violations=violations,
                                outcome=make_outcome("failed", expects="none",
                                                     action=pending.get("action")))
             # 誠實回錯（S-12：token 已燒是刻意的——要再做一次就要重新確認）。
@@ -3777,6 +3897,12 @@ class AgentRuntime:
         if receipt.get("error") == PHOTOS_UNAVAILABLE_RECEIPT_ERROR:
             # UD-3：照片失效那一筆重按 ⇒ 同一句（R4.3）。
             return finish(PHOTO_REUPLOAD_TEXT,
+                          outcome=make_outcome("failed", expects="none", action=action),
+                          **kwargs)
+        error = receipt.get("error")
+        if isinstance(error, str) and error in WRITE_RESULT_TEXTS:
+            # 寫入改接片 W6／W7：同一張卡重按 ⇒ 依同一個封閉錯誤碼回同一句（R4.3）。
+            return finish(WRITE_RESULT_TEXTS[error],
                           outcome=make_outcome("failed", expects="none", action=action),
                           **kwargs)
         if receipt.get("error"):
@@ -4382,13 +4508,30 @@ class AgentRuntime:
                     replay = _cache_key(user_message) in (agent_state.get(HANDOFF_CACHE_KEY) or {})
                     machine = (_parse_confirm_value(user_message) is not None
                                or _parse_select_value(user_message) is not None
-                               or _wc.parse_pick_value(user_message) is not None)
+                               or _wc.parse_pick_value(user_message) is not None
+                               or (self._fs_on() and WF.parse_fill_switch(user_message) is not None))
                     turn_image = _image_pick_resume(pending, user_message,
                                                     reask=not (machine or replay))
-        result = await self._run_turn_body(
-            identity, user_message, state, image=turn_image, context=context,
-            document=document,
-        )
+        fs_book = self._fs_on() and not self.readonly_view
+        if fs_book:
+            # 填欄結構化 S4：待換請求讀出即清（只活一回合；程式段早退的回合也清掉）。
+            # S2：回合開始的草稿簽章與 dialog 尾端，供回合收尾維護截點。
+            fs_agent = state.setdefault("agent", {})
+            fs_session = AgentSession(fs_agent)
+            fs_pending = fs_session.take_fill_switch()
+            fs_sig_start = _fs_draft_signature(fs_agent.get(WRITE_DRAFT_KEY))
+            fs_dialog = fs_agent.get("dialog")
+            fs_dialog_before = list(fs_dialog) if isinstance(fs_dialog, list) else []
+            result = await self._run_turn_body(
+                identity, user_message, state, image=turn_image, context=context,
+                document=document, fs_switch_pending=fs_pending,
+            )
+            self._fs_cut_after_turn(fs_agent, fs_dialog_before, fs_sig_start, result)
+        else:
+            result = await self._run_turn_body(
+                identity, user_message, state, image=turn_image, context=context,
+                document=document,
+            )
         if (
             image is not None
             and image.status == "partial"
@@ -4405,6 +4548,7 @@ class AgentRuntime:
         *, image: Optional[ImageTurnInput] = None,
         context: Optional[str] = None,
         document: Optional[DocumentTurnInput] = None,
+        fs_switch_pending: Any = None,
     ) -> TurnResult:
         """四段管線的**接線**（Plan R R1）：程式段 → 資料注入 → 模型迴圈 → 出口閘。
 
@@ -4449,6 +4593,9 @@ class AgentRuntime:
         loop_message = user_message
         pick_value = (_wc.parse_pick_value(user_message)
                       if self._write_candidates_active() else None)
+        # 填欄結構化 S4：`switch:yes`／`switch:no`（全等比對）——判定同 `pick:`，在草稿讀回與建立者比對之後。
+        fs_switch = (WF.parse_fill_switch(user_message)
+                     if pick_value is None and self._fs_on() and not self.readonly_view else None)
         if pick_value is not None:
             pick_exit = self._write_candidate_pick_begin(
                 acc, identity, agent_state, pick_value, document)
@@ -4457,6 +4604,12 @@ class AgentRuntime:
             # F12（§5.1 (A)）：寬鬆來源的選定 ⇒ 程式依本身分清單改寫草稿名稱（程式出卡之前）。
             await self._name_lenient_pick_rewrite(acc, identity, agent_state)
             loop_message = _wc.CANDIDATE_PICK_DIALOG_USER
+        elif fs_switch is not None:
+            switch_exit = await self._fill_switch_begin(
+                acc, identity, agent_state, fs_switch, fs_switch_pending)
+            if switch_exit is not None:
+                return switch_exit
+            loop_message = WF.FILL_SWITCH_DIALOG_YES
         else:
             # W1b（§8.6-3a）：意圖判斷呼叫 task 在這裡建立——程式段未結束回合、`_build_turn_context`
             # 之後；與下面的主模型迴圈並行。收尾在組 trace 的兩處（見 `_WriteIntentCall`）。
@@ -4600,6 +4753,9 @@ class AgentRuntime:
         # （失效時 0 次 JGB 查詢；成立時只有出卡前那一次帶 viewer 的精確編號查詢）。
         pick_turn = (self._write_candidates_active()
                      and _wc.parse_pick_value(user_message) is not None)
+        # 填欄結構化 S4：`switch:yes`／`switch:no` 按鈕回合同樣由程式處理（⛔ 前置查詢）。
+        if not pick_turn and self._fs_on() and WF.parse_fill_switch(user_message) is not None:
+            pick_turn = True
         pre_trigger = None if pick_turn else _pre_lookup_trigger(
             user_message,
             after_name_ask=(last_ask_target in _PRE_LOOKUP_NAME_ASK_TARGETS
@@ -5139,7 +5295,7 @@ class AgentRuntime:
         呼叫點在 `_write_draft_begin`（草稿讀回、建立者比對、點選範圍清草稿、候選集讀回與綁定檢查）之後。
 
         成立條件（全部）：候選集存在且形狀合法、建立者＝本回合身分、`(型別, 欄位, 編號)` 與候選集吻合
-        （型別不符即不成立）、草稿存在且動作＝候選集動作、`entry == "mcp"`、非影子回合、非文件回合與文件
+        （型別不符即不成立）、草稿存在且動作＝候選集動作、後端入口（`is_backend_entry()`，DSP-131）、非影子回合、非文件回合與文件
         暫存回合、非點選範圍回合、看得到該寫入動作。
         - 不成立 ⇒ 失效固定句結束回合：⛔ 任何 JGB 查詢、⛔ 動草稿、⛔ 動 token、⛔ 呼叫模型；
         - 成立 ⇒ 候選集寫 `picked`（選定編號**只存在候選集**，⛔ 寫進草稿），回 `None`：本回合由程式依
@@ -5156,7 +5312,7 @@ class AgentRuntime:
             and cand_type == cands.get("type")
             and _wc.allowed(cands.get("action"), cands.get("field"), cand_type)
             and str(pick_id).strip() in cands.get("ids", [])
-            and getattr(identity, "entry", None) == "mcp"
+            and is_backend_entry(getattr(identity, "entry", None))
             and not self.readonly_view
             and document is None
             and _document_carry_of(agent_state) is None
@@ -5889,7 +6045,11 @@ class AgentRuntime:
 
         同一個模型、同一個 client（`self.provider.async_client`）、輸入＝系統句＋本會話對話
         （`dialog`）＋當句（主呼叫輸入的子集，⛔ 資料段、⛔ 草稿注入行）；`max_completion_tokens`
-        800；與主模型迴圈**並行**（這裡只建立，⛔ await）。"""
+        800；與主模型迴圈**並行**（這裡只建立，⛔ await）。
+        填欄結構化 on（plan-fill-structured-20261030 S1、S2）：對話紀錄只取截點之後（`_fs_dialog_view`，不跨草稿）；
+        有草稿時在當句前插一段狀態段（`_fs_state_message`：草稿目前值，nonce 包住、每個值先淨化再截長）——這是「意圖呼叫
+        輸入 ⛔ 含使用者值」規約的改動（§6.3），只進意圖呼叫自己的 messages，⛔ 系統句、⛔ `acc.inject`、⛔ 主模型。
+        off ⇒ 與改前逐字相同。"""
         if document is not None:
             return
         if self._closing_active():
@@ -5912,10 +6072,15 @@ class AgentRuntime:
         messages: list = [{"role": "system",
                            "content": WF.write_intent_system_prompt(
                                enum_labels=enum_labels, rechoice_type=rechoice_type, **fill_kw)}]
-        for m in agent_state.get("dialog") or []:
+        fs = bool(fill_kw.get("fill_structured"))
+        for m in self._fs_dialog_view(acc, agent_state) if fs else (agent_state.get("dialog") or []):
             if (isinstance(m, dict) and m.get("role") in ("user", "assistant")
                     and isinstance(m.get("content"), str)):
                 messages.append({"role": m["role"], "content": m["content"]})
+        if fs:
+            state_message = self._fs_state_message(acc)
+            if state_message is not None:
+                messages.append(state_message)
         messages.append({"role": "user", "content": user_message if isinstance(user_message, str) else ""})
         kwargs: dict = dict(
             model=self._model,
@@ -5962,6 +6127,268 @@ class AgentRuntime:
         self._write_intent_calls[acc.trace_id] = call
         acc.write_intent_call = call
 
+    # -- 填欄結構化（plan-fill-structured-20261030 S1～S6）---------------------------------------------
+    # 分工（DSP-091、DSP-127、DSP-128）：AI 換算欄位值並標出指令（fill／correct／new_request／none）；程式只驗格式、範圍、
+    # 值域（`fill_values`），並決定收不收、覆不覆寫、要不要先問換單。⛔ 本節任何地方讀使用者原話判斷值或意圖。
+    def _fs_on(self) -> bool:
+        """`AGENT_FILL_STRUCTURED` on（建構期已驗前置開關）。測試替身沒跑 `__init__` ⇒ 視為 off（off 等價）。"""
+        return getattr(self, "_fill_structured_on", False) is True
+
+    @staticmethod
+    def _fs_cut_after_turn(agent_state: dict, dialog_before: list, sig_start: Optional[tuple],
+                           result: Any) -> None:
+        """S2：回合收尾（`append_dialog` 之後）維護截點 `{total, cut}`。
+
+        - `total` 累加本回合新寫進 `dialog` 的則數（以回合開始時最後一則的物件身分找新增段；`dialog` 只從前端修剪）；
+          讀不到截點或形狀不合 ⇒ 以回合開始時的 `dialog` 長度起算（`cut=0`）。
+        - 回合開始時有草稿，且本回合草稿結束 ⇒ `cut = total`。草稿結束＝回合結束時沒有草稿（送出、取消、閒置清除、
+          `select:` 清除、`scope_exit`…）、建立者不同、回合開始時形狀不合，或本回合 S4 按「換」（`V_FS_SWITCH_CONFIRMED`）。
+          同一建立者只換動作（S6 空草稿直接替換）⛔ 算結束。"""
+        session = AgentSession(agent_state)
+        after = agent_state.get("dialog")
+        after = after if isinstance(after, list) else []
+        new = len(after)
+        if dialog_before:
+            last = dialog_before[-1]
+            for i in range(len(after) - 1, -1, -1):
+                if after[i] is last:
+                    new = len(after) - i - 1
+                    break
+        cut = WF.load_fill_cut(session.get_fill_cut()) or {"total": len(dialog_before), "cut": 0}
+        total = min(cut["total"] + new, 10 ** 9)
+        point = min(cut["cut"], total)
+        if sig_start is not None:
+            sig_end = _fs_draft_signature(agent_state.get(WRITE_DRAFT_KEY))
+            trace = getattr(result, "trace", None)
+            marks = getattr(trace, "violations", None) or ()
+            if (sig_start == _FS_SIG_INVALID or sig_end is None or sig_end == _FS_SIG_INVALID
+                    or sig_end[1] != sig_start[1] or WF.V_FS_SWITCH_CONFIRMED in marks):
+                point = total
+        session.write_fill_cut({"total": total, "cut": point})
+
+    def _fs_dialog_view(self, acc: TurnAccumulator, agent_state: dict) -> list:
+        """S2 不跨草稿：意圖呼叫只帶截點之後的對話紀錄。截點 `{total, cut}` 由 `run_turn` 在回合收尾後維護；
+        `dialog` 會修剪，故只取尾端 `total - cut` 則（讀不到或形狀不合 ⇒ 整份 `dialog`，⛔ 補猜）。"""
+        dialog = agent_state.get("dialog") or []
+        if not isinstance(dialog, list):
+            return []
+        cut = WF.load_fill_cut(AgentSession(agent_state).get_fill_cut())
+        if cut is None:
+            return list(dialog)
+        keep = cut["total"] - cut["cut"]
+        return list(dialog[-keep:]) if keep > 0 else []
+
+    def _fs_state_message(self, acc: TurnAccumulator) -> Optional[dict]:
+        """S1 狀態段：草稿存活時，意圖呼叫在當句前多一則 user 訊息——`wrap_tool_data(…, acc.nonce)` 包住程式產生的
+        狀態（`WF.fill_state_text`；值先淨化再截長、⛔ `pending_id`）。⛔ 系統句、⛔ `acc.inject`、⛔ 主模型。"""
+        wd = acc.write_draft
+        if wd is None or not isinstance(wd.draft, dict):
+            return None
+        card_action = wd.draft.get("action") if wd.bound_card_live else None
+        text = WF.fill_state_text(wd.draft, wd.asked, card_action)
+        if text is None:
+            return None
+        return {"role": "user", "content": wrap_tool_data(WF.FILL_STATE_DATA_LABEL, text, acc.nonce)}
+
+    def _fs_bill_pick_ids(self, acc: TurnAccumulator, action: Any) -> Optional[tuple]:
+        """S3 選定紀錄欄（N1）的候選集：只有本回合候選集已開、型別是帳單、動作相同 ⇒ 候選 `ids`；其餘 ⇒ `None`（不收）。"""
+        wd = acc.write_draft
+        cands = wd.candidates if wd is not None else None
+        if (isinstance(cands, dict) and cands.get("type") == _wc.TYPE_BILL and cands.get("action") == action
+                and isinstance(cands.get("ids"), (list, tuple))):
+            return tuple(str(i) for i in cands["ids"])
+        return None
+
+    def _fs_merge_admit(
+        self, acc: TurnAccumulator, identity: Identity, action: str, form: Any, intent: Any,
+    ) -> bool:
+        """S2／S4（意圖結果合併前；動作值域與可見性已驗）：回 `True` ⇒ 照常合併進 `action` 的草稿。
+        - 指令 `none` ⇒ `False`（帶值也不收，N12）；
+        - 已有草稿且（動作不同或指令 `new_request`）⇒ 換單：
+          · 同回合主模型提議開的空草稿（`fs_proposal_empty`，沒有值、沒出卡）且動作不同 ⇒ 直接取代、記
+            `V_FS_PROPOSAL_DRAFT_REPLACED`（主會話定的處理順序，⛔ 出 S4）；同動作 ⇒ 照常合併；
+          · 回合開始已選定或已撤回的同動作草稿、意圖只帶名稱 ⇒ 照現行名稱規則（安審 F4；A4「選定後講另一間」），⛔ 出 S4；
+          · 其他 ⇒ 記下待換請求（只存過 S3 的 int／number／date／text 值，候選集一律不給 ⇒ 選定紀錄欄不收）、
+            ⛔ 合併，回合由 `_fill_structured_exit` 出確認句與兩顆按鈕（現卡保留）。"""
+        wd = acc.write_draft
+        cmd = wd.fs_command or WF.FILL_COMMAND_FILL
+        if cmd == WF.FILL_COMMAND_NONE:
+            return False
+        draft = wd.draft
+        if not isinstance(draft, dict):
+            return True
+        same_action = draft.get("action") == action
+        if same_action and cmd != WF.FILL_COMMAND_NEW_REQUEST:
+            return True
+        if wd.fs_proposal_empty:
+            wd.fs_proposal_empty = False
+            if not same_action:
+                wd.draft = None
+                wd.asked = []
+                acc.violations.append(WF.V_FS_PROPOSAL_DRAFT_REPLACED)
+            return True
+        if (same_action and self._write_candidates_post_pick(acc, identity) is not None
+                and not _intent_has_value(intent)):
+            return True
+        if wd.fs_switch_ask is None:
+            today = wd.fs_today or bills._today()
+            fields: dict = {}
+            for item in getattr(intent, "fields", None) or []:
+                f = form.field(item.key)
+                if f is None or f.kind not in FV.S3_KINDS:
+                    continue
+                stored, mark = FV.validate_with_reason(
+                    action, f, getattr(item, "value", None), today=today, candidates=None)
+                if stored is None:
+                    if mark is not None:
+                        acc.violations.append(mark)
+                    continue
+                fields[f.key] = stored
+            wd.fs_switch_ask = WF.new_fill_switch(action, fields, wd.owner)
+        wd.activity = True
+        return False
+
+    def _fs_overwrite_ok(self, acc: TurnAccumulator, action: str, f: Any, current: Any, value: str) -> bool:
+        """S4 覆寫規則（值已過 S3；名稱欄、選定紀錄欄、候選綁定欄與 S3 不涵蓋的型別照現行，⛔ 套用）：草稿該欄已有
+        過 S3 的值（以 `fill_values` 重驗現值判定；off 時期或其他路徑留下、驗不過的值不受保護）且新值不同 ⇒ 只有指令
+        `correct` 且該欄列在 `correct_keys`、或該欄是程式正在追問的欄（`wd.asked`）才覆寫，否則不覆寫、記
+        `V_FS_FILLED_KEPT`。實際覆寫已填欄 ⇒ 記 `(鍵, 舊, 新)` 供卡外列出。"""
+        wd = acc.write_draft
+        if not isinstance(current, str) or not current.strip() or current == value:
+            return True
+        cands = wd.candidates
+        if (f.key in WF.NAME_KEYS or f.kind not in FV.S3_KINDS or FV.is_record_pick_field(action, f)
+                or (isinstance(cands, dict) and cands.get("field") == f.key)):
+            return True
+        protected = FV.validate(action, f, current, today=wd.fs_today or bills._today(),
+                                candidates=self._fs_bill_pick_ids(acc, action)) is not None
+        allowed = ((wd.fs_command == WF.FILL_COMMAND_CORRECT and f.key in wd.fs_correct_keys)
+                   or f.key in wd.asked)
+        if protected and not allowed:
+            if WF.V_FS_FILLED_KEPT not in acc.violations:
+                acc.violations.append(WF.V_FS_FILLED_KEPT)
+            return False
+        wd.fs_overwrites.append((f.key, current, value))
+        return True
+
+    @staticmethod
+    def _fs_exit_pending(wd: Any) -> bool:
+        """本回合要由 `_fill_structured_exit` 結束（S4 換單確認或 S3 重問；只看旗標，⛔ 呼叫出口）。off 恆 `False`。"""
+        return bool(wd is not None and (getattr(wd, "fs_switch_ask", None) is not None
+                                        or getattr(wd, "fs_rejected", None)))
+
+    def _fs_switch_button_turn(self, acc: TurnAccumulator) -> bool:
+        """本回合是 `switch:yes` 按鈕換單成立的回合（⛔ 呼叫主模型；同 `pick:` 按鈕回合）。"""
+        wd = acc.write_draft
+        return bool(wd is not None and wd.fs_switch_button and self._fs_on())
+
+    async def _fill_switch_begin(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, yes: bool, raw_pending: Any,
+    ) -> Optional[TurnResult]:
+        """S4 按鈕回合（`switch:yes`／`switch:no` 機器值已全等比對；`raw_pending`＝回合開始讀出即清的待換請求）。
+        判定在 `_write_draft_begin`（草稿讀回、建立者比對）之後：
+        - 待換請求不存在、形狀不合、建立者≠本回合身分、目前沒有草稿、看不到新動作 ⇒ 失效固定句結束回合；
+        - 不換 ⇒ 草稿與現卡不動，程式狀態回話（同卡或缺欄追問）前加「保留目前這筆」固定句；
+        - 換 ⇒ 比照 `_write_draft_reissue_gate` 燒掉舊草稿綁定的卡（`redeem_pending`）並標 `invalidated`、清草稿與
+          候選集、以待換請求開新草稿（值再過一次 S3）、記 `V_FS_SWITCH_CONFIRMED`；回 `None` ⇒ 呼叫端照 `pick:` 按鈕回合
+          由程式依新草稿觸發（⛔ 意圖呼叫、⛔ 主模型）。
+        dialog 的使用者端只寫固定摘要（⛔ 按鈕值）。"""
+        wd = acc.write_draft
+        dialog_user = WF.FILL_SWITCH_DIALOG_YES if yes else WF.FILL_SWITCH_DIALOG_NO
+        pending = WF.load_fill_switch(raw_pending)
+        draft = wd.draft if wd is not None and isinstance(wd.draft, dict) else None
+        if (pending is None or draft is None or pending["creator"] != wd.owner
+                or not self._write_draft_visible(identity, pending["action"])):
+            return self._finish_confirm_turn(
+                agent_state=agent_state, user_message=dialog_user, trace_id=acc.trace_id, start=acc.start,
+                kind="answer", outcome=make_outcome("answered", expects="text"),
+                answer=WF.FILL_SWITCH_INVALID_TEXT, pending_id=None, tool_calls=acc.tool_call_records,
+                violations=acc.violations, llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+                completion_tokens=acc.completion_tokens)
+        wd.activity = True
+        # 按鈕回合：訊息是程式驗過的固定值 ⇒ ⛔ 名稱寬鬆比對、⛔ 敏感判準拿它當客人原話。
+        wd.fs_switch_button = True
+        if not yes:
+            state = await self._write_reply_state(acc, identity, agent_state)
+            result = self._write_reply_state_exit(
+                acc, agent_state, dialog_user, state, source=WF.WRITE_REPLY_SOURCE_PROGRAM)
+            # 卡外前導句（⛔ 進 dialog、⛔ 進卡與雜湊；同 `run_turn` 接「只看了前 N 張」的時機）。
+            kept = WF.FILL_SWITCH_KEPT_TEMPLATE.format(cur=WF.FORMS[draft["action"]].title_zh)
+            result.answer = f"{kept}\n{result.answer}"
+            return result
+        bound = self._write_draft_bound_card(identity, agent_state, draft["action"])
+        if bound is not None:
+            pid, entry = bound
+            if not isinstance(entry.get("receipt"), dict) and entry.get("invalidated") is not True:
+                if self._db_pool is not None:
+                    await redeem_pending(self._db_pool, identity.session_id, pid)
+                entry["invalidated"] = True
+        form = WF.FORMS[pending["action"]]
+        today = bills._today()
+        fields: dict = {}
+        for key, value in pending["fields"].items():
+            f = form.field(key)
+            if f is None or f.kind not in FV.S3_KINDS:
+                continue
+            stored = FV.validate(form.action, f, value, today=today)
+            if stored is not None:
+                fields[key] = stored
+        self._write_draft_clear(acc, agent_state)
+        wd.candidates = None
+        wd.draft = WF.new_draft(form.action, wd.owner)
+        wd.draft["fields"].update(fields)
+        wd.asked = []
+        wd.created = True
+        wd.intent_consumed = True
+        wd.fs_today = today
+        wd.touched.update(fields)
+        acc.violations.append(WF.V_FS_SWITCH_CONFIRMED)
+        self._write_draft_persist(acc, agent_state)
+        return None
+
+    def _fill_structured_exit(
+        self, acc: TurnAccumulator, agent_state: dict, user_message: str,
+    ) -> Optional[TurnResult]:
+        """填欄結構化的程式出口（與重送、卡仍有效、剛送出三個出口同一組檢查點）：
+        - S4：待換請求 ⇒ 落地（session `fill_switch`，綁建立者、只活一回合）、程式確認句＋兩顆固定按鈕
+          （`switch:yes`／`switch:no`，⛔ 帶欄位值）；草稿與現卡不動；
+        - S3：本回合有不收的欄 ⇒ 舊值保留、把那幾欄記為程式追問的欄（`asked`，下一句即使 AI 標 `fill` 也可寫入）、
+          回依欄位分類的固定重問句（N11，只有表單標籤）。
+        其餘 ⇒ `None`。回合一律經 `_finish_confirm_turn`（⛔ 交主模型寫回覆）。"""
+        wd = acc.write_draft
+        if not self._fs_on() or wd is None:
+            return None
+        common = dict(
+            agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
+            start=acc.start, tool_calls=acc.tool_call_records, violations=acc.violations,
+            llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+            completion_tokens=acc.completion_tokens,
+        )
+        draft = wd.draft if isinstance(wd.draft, dict) else None
+        if wd.fs_switch_ask is not None:
+            entry, wd.fs_switch_ask = wd.fs_switch_ask, None
+            cur = draft.get("action") if draft is not None else None
+            text = WF.fill_switch_ask_text(cur, entry.get("action"))
+            if text is not None:
+                AgentSession(agent_state).write_fill_switch(entry)
+                acc.violations.append(WF.V_FS_SWITCH_ASKED)
+                return self._finish_confirm_turn(
+                    kind="ask", outcome=make_outcome("clarifying", expects="choice", action=cur),
+                    answer=text, pending_id=None, quick_replies=WF.fill_switch_quick_replies(), **common)
+        if wd.fs_rejected and draft is not None:
+            keys, wd.fs_rejected = list(wd.fs_rejected), []
+            action = draft.get("action")
+            text = WF.fill_reask_text(action, keys)
+            form = WF.FORMS.get(action)
+            if text is not None and form is not None:
+                draft["asked"] = [k for k in keys if form.field(k) is not None]
+                self._write_draft_persist(acc, agent_state)
+                labels = [form.field(k).label for k in draft["asked"]]
+                return self._finish_confirm_turn(
+                    kind="ask", outcome=make_outcome("clarifying", expects="text", action=action),
+                    answer=text, pending_id=None, ask_target=WF.ask_target_for_missing(labels), **common)
+        return None
+
     # -- 填欄只填答覆（plan-fill-answer-only-20261027 §4.1）------------------------------------------
     # 分工（DSP-091）：哪部分是資料、哪部分回答追問欄位由 AI 在寫入意圖呼叫標出（`data_texts`／`answer_text`）；
     # 填不填、併不併、要不要重問由程式決定。⛔ 本節任何地方以道謝或寒暄的詞表判斷。
@@ -5975,8 +6402,13 @@ class AgentRuntime:
         與開關 off ⇒ `{}`、⛔ 設 `fill_active`：系統句、schema、①～⑥ 值閘、整句填入、B5、B6 與 off 逐字相同。
         填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.1、§4.2）：首句、卡後、多欄三種回合另由
         `_fill_wide_begin` 判（`AGENT_FILL_DATA_TEXT_WIDE` on）⇒ 回 `{"data_text": True}`（⛔ `asked_labels`）、設 `fill_wide`；
-        與單欄追問回合互斥。"""
+        與單欄追問回合互斥。
+        填欄結構化 on（plan-fill-structured-20261030 S2、S5）：一律回 `{"fill_structured": True, "today": 今天}`（今天＝本回合
+        唯一一次 `bills._today()`，S3 共用 `wd.fs_today`），⛔ 設 `fill_active`、`fill_wide`（兩條資料段路徑在 on 路徑不存在）。"""
         wd = acc.write_draft
+        if wd is not None and self._fs_on():
+            wd.fs_today = bills._today()
+            return {"fill_structured": True, "today": wd.fs_today}
         if not self._fill_data_text_on or wd is None:
             return {}
         if not (wd.had_draft and wd.asked and not wd.frozen and wd.draft is not None) or len(wd.asked) != 1:
@@ -6181,7 +6613,14 @@ class AgentRuntime:
         return [label for (act, _key), label in wd.fill_wide_rejected.items() if act == action]
 
     def _fill_wide_notice(self, wd: Any) -> Optional[str]:
-        """§4.3 第 8 點「部分套用、卡重出」：點名沒套用的欄位標籤的程式固定句（⛔ 帶值）；沒有 ⇒ `None`。"""
+        """§4.3 第 8 點「部分套用、卡重出」：點名沒套用的欄位標籤的程式固定句（⛔ 帶值）；沒有 ⇒ `None`。
+        填欄結構化 on（S4，N5）：改列本回合覆寫的欄位「欄：舊 → 新」（卡外，⛔ 進卡、⛔ 進雜湊；值經淨化截長）。"""
+        if self._fs_on():
+            draft = getattr(wd, "draft", None)
+            changes = getattr(wd, "fs_overwrites", None)
+            if not isinstance(draft, dict) or not changes:
+                return None
+            return WF.fill_overwrite_lines(draft.get("action"), changes)
         return WF.fill_wide_not_applied_text(self._fill_wide_not_applied_labels(wd))
 
     @staticmethod
@@ -6365,10 +6804,12 @@ class AgentRuntime:
 
     @staticmethod
     def _pre_loop_program_exit_pending(acc: TurnAccumulator) -> bool:
-        """迴圈前的三個程式出口（重送、卡仍有效、剛送出）會不會回（只看旗標，⛔ 呼叫出口函式——它們有收尾副作用）。"""
+        """迴圈前的三個程式出口（重送、卡仍有效、剛送出）會不會回（只看旗標，⛔ 呼叫出口函式——它們有收尾副作用）。
+        填欄結構化 on：S4 換單確認、S3 重問兩個出口也算（off 時兩個旗標恆為預設值）。"""
         wd = acc.write_draft
         return bool(wd is not None and (
-            wd.reissue_blocked or isinstance(wd.card_still_valid, dict) or wd.submitted_edit))
+            wd.reissue_blocked or isinstance(wd.card_still_valid, dict) or wd.submitted_edit
+            or AgentRuntime._fs_exit_pending(wd)))
 
     async def _dialog_act_pre_loop(
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str, *,
@@ -6478,18 +6919,35 @@ class AgentRuntime:
                 and self._fill_intent_in_domain(intent)):
             # 填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.2）：資料段同樣只由這個驗過、值域內的物件讀。
             self._fill_wide_read_data(acc.write_draft, obj, acc.violations)
+        if acc.write_draft is not None and self._fs_on():
+            # 填欄結構化 S2：指令欄與 `correct_keys` 由原始物件讀（`WriteIntent` 忽略多餘鍵）。值域外、缺鍵、`correct` 沒附
+            # `correct_keys` ⇒ 當 `fill`（N12）；`correct_keys` 只留該動作 user_words 表單鍵（下一步由程式定）。
+            wd = acc.write_draft
+            cmd, keys, invalid = WF.intent_fill_command(obj)
+            form = WF.FORMS.get(intent.action)
+            wd.fs_intent_seen = True
+            wd.fs_command = cmd
+            wd.fs_correct_keys = tuple(
+                k for k in keys
+                if form is not None and form.field(k) is not None
+                and form.field(k).source == WF.SOURCE_USER_WORDS)
+            if invalid and WF.V_FS_COMMAND_INVALID not in acc.violations:
+                acc.violations.append(WF.V_FS_COMMAND_INVALID)
         if intent.action == WF.INTENT_NONE:
             return None
         return intent
 
     async def _write_draft_gate_value(
         self, f: Any, raw: Any, identity: Identity, texts: list, violations: list,
-        *, from_intent: bool = False,
+        *, from_intent: bool = False, fs: Optional[dict] = None,
     ) -> Optional[str]:
         """值閘（§2.1(3) 型別×規則表）：過 ⇒ 要存進草稿的字串；不過 ⇒ `None`＋固定字串
         violation（⛔ 帶值）。空值／沒給 ⇒ `None` 且不記 violation。
         W1c §9.11-1：`from_intent`（值來自意圖判斷呼叫）時 `int`／`number` 取值改用
-        `parse_number_token`（恰好一個數字 token ⇒ 取它），仍須過 `_number_in_texts`。"""
+        `parse_number_token`（恰好一個數字 token ⇒ 取它），仍須過 `_number_in_texts`。
+        填欄結構化 S3（`fs` 非 `None`，只有 on 且值來自意圖結果時由 `_write_draft_turn_gate` 傳）：`int`／`number`／
+        `date`／`text` 改由 `fill_values.validate_with_reason`（⛔ 收原話）取代原話比對；其餘檢查（user_words、布林與型別、
+        空值、`value_max_len`）照舊，其他型別照現行。不收 ⇒ 記 S3 標記並把鍵記進 `fs["rejected"]`。"""
         if f is None or f.source != WF.SOURCE_USER_WORDS:
             return None
         if isinstance(raw, bool):
@@ -6507,6 +6965,15 @@ class AgentRuntime:
             violations.append(WF.V_VALUE_TOO_LONG)
             return None
         kind = f.kind
+        if fs is not None and kind in FV.S3_KINDS:
+            stored, mark = FV.validate_with_reason(
+                fs["action"], f, value, today=fs["today"], candidates=fs.get("candidates"))
+            if stored is None:
+                if mark is not None:
+                    violations.append(mark)
+                    fs.setdefault("rejected", []).append(mark)
+                return None
+            return stored
         if kind == "text":
             needle = _no_ws(value)
             if (sanitize_data_piece(value) != value
@@ -6611,9 +7078,28 @@ class AgentRuntime:
         B5 追問回合（草稿仍是回合開始那份）已填的非追問欄、且不是候選集綁定那一欄 ⇒ 不覆寫（`fill_filled_field_kept`）。
         修復輪 2（P3-2）：候選集綁定那一欄（`_fill_bound_field_exempt`）⇒ 不套 B2／B3／(iii)，只過 (i)（比全部
         `user_texts`）；例外實際放行時記 `fill_bound_field_exempt`。
-        存進草稿的一律是 (i) 的輸出。"""
+        存進草稿的一律是 (i) 的輸出。
+        填欄結構化 on（S3、S5、S6）：`from_intent=False`（主模型提議、暫存名稱）⇒ 不收；意圖結果 ⇒ (i) 帶 `fs`（int／number／
+        date／text 改走 `fill_values`），本節 B2～B5 與寬回合兩條資料段路徑都不存在。S3 不收的欄記進 `wd.fs_rejected`
+        （選定紀錄欄除外：那欄由候選流程處理），回合由 `_fill_structured_exit` 重問。"""
         wd = acc.write_draft
         marks_before = len(acc.violations)
+        if self._fs_on():
+            if not from_intent or not isinstance(wd.draft, dict):
+                return None, False
+            action = wd.draft.get("action")
+            fs: dict = {"action": action, "today": wd.fs_today or bills._today(),
+                        "candidates": self._fs_bill_pick_ids(acc, action)}
+            if wd.fs_today is None:
+                wd.fs_today = fs["today"]
+            value = await self._write_draft_gate_value(
+                f, raw, identity, wd.user_texts, acc.violations, from_intent=True, fs=fs)
+            rejected = fs.get("rejected") or []
+            if (value is None and f is not None
+                    and any(m in (WF.V_FS_FORMAT_INVALID, WF.V_FS_OUT_OF_BOUNDS) for m in rejected)
+                    and not FV.is_record_pick_field(action, f) and f.key not in wd.fs_rejected):
+                wd.fs_rejected.append(f.key)
+            return value, value is None and len(acc.violations) > marks_before
         value = await self._write_draft_gate_value(
             f, raw, identity, wd.user_texts, acc.violations, from_intent=from_intent)
         if value is None:
@@ -6728,6 +7214,10 @@ class AgentRuntime:
             # （偏保守：⛔ 從一份夾帶域外鍵的意圖裡挑幾個看起來對的值來用）。
             acc.violations.append(WF.V_OUT_OF_DOMAIN)
             return set()
+        fs = self._fs_on()
+        if fs and not self._fs_merge_admit(acc, identity, action, form, intent):
+            # 填欄結構化 S2／S4：`none` 帶值不收；換單（動作不同或 `new_request`）由程式先問、⛔ 合併。
+            return set()
         wd.activity = True
         draft = self._write_draft_target(acc, action, from_intent=True)
         # W1c §9.11-2：本回合前置查詢唯一命中而寫進**這份**草稿的物件名稱（系統值）優先——意圖的
@@ -6773,6 +7263,8 @@ class AgentRuntime:
                 # A+ 片 AP-2（Q2）：值閘拒收（有記 violation；空值不算）⇒ 使用者句子的值被丟。
                 if dropped:
                     wd.user_value_dropped = True
+                continue
+            if fs and not self._fs_overwrite_ok(acc, action, f, draft["fields"].get(f.key), value):
                 continue
             provided.add(f.key)
             wd.touched.add(f.key)
@@ -6872,7 +7364,10 @@ class AgentRuntime:
         （`provided`）⇒ 用它，不整句填。呼叫端已排除凍結回合與「意圖呼叫回傳另一支寫入動作」
         （安全處置 1a）。
         F12 r6 復原第 5 輪 §11.15.3 第 1 點（R19-2；Q15-1、Q15-2）：回合開始時候選集已選定或已撤回、仍綁定本草稿
-        （`post_pick_start`）⇒ ⛔ 整句填入（所有文字欄）；追問欄位只收意圖抽出、過值閘的值，沒抽到 ⇒ 程式照現行追問。"""
+        （`post_pick_start`）⇒ ⛔ 整句填入（所有文字欄）；追問欄位只收意圖抽出、過值閘的值，沒抽到 ⇒ 程式照現行追問。
+        填欄結構化 on（S6）：⛔ 執行——原句或答覆段不是 AI 給的結果；值沒抽到由程式照缺欄追問。"""
+        if self._fs_on():
+            return
         wd = acc.write_draft
         if wd is None or wd.draft is None or len(wd.asked) != 1:
             return
@@ -7220,6 +7715,18 @@ class AgentRuntime:
         if unwrapped:
             acc.violations.append(WF.V_WRITE_PROPOSAL_UNWRAPPED)
         if wd.frozen or wd.submitted_edit:
+            return True
+        if self._fs_on():
+            # 填欄結構化 S6：提議的欄位值（含名稱）一律不併、⛔ 暫存——只當「客人想做這件事」的訊號，值等意圖結果過 S3。
+            # 沒有草稿 ⇒ 以提議的動作開空草稿（程式照缺欄追問）；已有草稿、動作不同 ⇒ ⛔ `_write_draft_target`，記下來
+            # 由 `_write_draft_decide` 走 S4 確認（草稿與現卡不動）；同動作 ⇒ 不動草稿。
+            wd.activity = True
+            if wd.draft is None:
+                self._write_draft_target(acc, action, from_intent=True)
+                wd.fs_proposal_empty = True
+                self._write_draft_persist(acc, agent_state)
+            elif wd.draft.get("action") != action:
+                wd.fs_proposal_switch = action
             return True
         wd.activity = True
         draft = self._write_draft_target(acc, action, from_intent=True)
@@ -7705,7 +8212,8 @@ class AgentRuntime:
                 session.clear_write_draft()
             else:
                 session.write_write_draft(pre_draft)
-        if wd.reissue_blocked or isinstance(wd.card_still_valid, dict) or wd.submitted_edit:
+        if (wd.reissue_blocked or isinstance(wd.card_still_valid, dict) or wd.submitted_edit
+                or self._fs_exit_pending(wd)):
             return "exit", None
         no_value = await self._write_proposal_no_value(acc, identity, agent_state, raw_args)
         if no_value is not None:
@@ -7816,10 +8324,12 @@ class AgentRuntime:
     def _write_proposal_exit(
         self, acc: TurnAccumulator, agent_state: dict, user_message: str,
     ) -> Optional[TurnResult]:
-        """AP-1 (4)：提議沒轉成程式呼叫時的既有程式出口（與另兩個檢查點同一組、同一順序）。"""
+        """AP-1 (4)：提議沒轉成程式呼叫時的既有程式出口（與另兩個檢查點同一組、同一順序）。
+        填欄結構化 on：S4／S3 出口排在最後（off ⇒ 恆 `None`）。"""
         return (self._write_draft_reissue_exit(acc, agent_state, user_message)
                 or self._write_draft_card_still_valid_exit(acc, agent_state, user_message)
-                or self._write_draft_submitted_exit(acc, agent_state, user_message))
+                or self._write_draft_submitted_exit(acc, agent_state, user_message)
+                or self._fill_structured_exit(acc, agent_state, user_message))
 
     def _write_draft_record_asked(
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
@@ -7846,6 +8356,12 @@ class AgentRuntime:
         if not self._write_draft_visible(identity, action):
             return
         keys = WF.asked_keys_for_labels(action, data.get("missing_fields") or [])
+        if self._fs_on() and wd.draft is not None and wd.draft["action"] != action:
+            # 填欄結構化 S4（N2）：動作不同 ⇒ ⛔ 自己換草稿，改走程式換單確認（值不帶；呼叫端改由
+            # `_fill_structured_exit` 結束回合）。
+            if wd.fs_switch_ask is None:
+                wd.fs_switch_ask = WF.new_fill_switch(action, {}, wd.owner)
+            return
         if wd.draft is None or wd.draft["action"] != action:
             wd.draft = WF.new_draft(action, wd.owner)
         wd.draft["asked"] = keys
@@ -7938,6 +8454,15 @@ class AgentRuntime:
             # 填欄只填答覆 B6（§4.1）：追問回合（草稿仍是回合開始那份）追問的欄位本回合仍缺 ⇒ 程式依草稿照現行缺欄
             # 追問句重問（⛔ 交主模型、⛔ 整句填入）。資料段未知、答覆段為空、值被拒收都走這裡。
             self._fill_reask_if_missing(acc)
+        if self._fs_on():
+            # 填欄結構化 S6／S4：主模型提議了另一支動作（草稿未換）、意圖結果沒有另起換單請求 ⇒ 程式出 S4 確認（值一律不帶）。
+            if (wd.fs_proposal_switch is not None and wd.fs_switch_ask is None
+                    and isinstance(wd.draft, dict) and wd.draft.get("action") != wd.fs_proposal_switch):
+                wd.fs_switch_ask = WF.new_fill_switch(wd.fs_proposal_switch, {}, wd.owner)
+            wd.fs_proposal_switch = None
+            if wd.fs_switch_ask is not None or wd.fs_rejected:
+                # S4 換單確認或 S3 重問 ⇒ ⛔ 觸發；回合由 `_fill_structured_exit` 結束。
+                return None
         draft = wd.draft
         if draft is None or not (wd.created or wd.merged or wd.caught or wd.filled
                                  or wd.picked or wd.reask or wd.rechoice or wd.relist or wd.fill_reask):
@@ -8812,7 +9337,9 @@ class AgentRuntime:
             return None
         rules = getattr(self.verifier, "rules", None)
         # A-2a：按鈕選定回合沒有使用者文字可判敏感（訊息是程式驗過的機器值）⇒ 直接交 `_write_draft_decide`。
-        if not wd.pick_button and (rules is None or question_sensitive(user_message, rules)):
+        # 填欄結構化 S4：`switch:yes` 按鈕回合同（訊息是程式驗過的固定值）。
+        if (not wd.pick_button and not wd.fs_switch_button
+                and (rules is None or question_sensitive(user_message, rules))):
             return None
         call = acc.write_intent_call
         if not wd.intent_consumed and call is not None and not call.settled and not call.label_only:
@@ -9097,12 +9624,14 @@ class AgentRuntime:
                         return act_exit
             reissue_exit = (self._write_draft_reissue_exit(acc, agent_state, user_message)
                             or self._write_draft_card_still_valid_exit(acc, agent_state, user_message)
-                            or self._write_draft_submitted_exit(acc, agent_state, user_message))
+                            or self._write_draft_submitted_exit(acc, agent_state, user_message)
+                            or self._fill_structured_exit(acc, agent_state, user_message))
             if reissue_exit is not None:
                 return reissue_exit
-            if program_message is None and self._write_candidate_button_turn(acc):
+            if program_message is None and (self._write_candidate_button_turn(acc)
+                                            or self._fs_switch_button_turn(acc)):
                 # 按鈕選定成立、程式卻沒觸發（期限不足等）⇒ 程式狀態回話結束回合
-                # （⛔ 呼叫主模型）。
+                # （⛔ 呼叫主模型）。填欄結構化 S4 的 `switch:yes` 回合同。
                 return await self._write_reply_program_exit(acc, identity, agent_state, user_message)
         while True:
             if (self._clock() - acc.start) >= self.budget.deadline_s:
@@ -9639,6 +10168,11 @@ class AgentRuntime:
                         # W1b §8.5-1：程式缺欄追問出口是 `asked` 的唯一寫點。
                         self._write_draft_record_asked(
                             acc, identity, agent_state, tool_result, raw_args, document)
+                        if self._fs_exit_pending(acc.write_draft):
+                            # 填欄結構化 S4（N2）：缺欄追問的動作和草稿不同 ⇒ 程式換單確認（草稿與現卡不動）。
+                            fs_exit = self._fill_structured_exit(acc, agent_state, user_message)
+                            if fs_exit is not None:
+                                return fs_exit
                         # F12 r6-3 (a)：本回合打字改選成立、還沒出卡 ⇒ 追問前加告知固定句（系統正名與編號）；
                         # dialog 寫不含名稱的程式摘要。其餘回合 `_repick_notice is None` ⇒ 與改動前逐字相同。
                         _repick_notice = (self._write_candidates_repick_notice(acc)
@@ -9910,7 +10444,7 @@ class AgentRuntime:
                         acc, identity, agent_state, user_message, write_entry=write_entry)
                     if kd3_exit is not None:
                         return kd3_exit
-                if wd_program and self._write_candidate_button_turn(acc):
+                if wd_program and (self._write_candidate_button_turn(acc) or self._fs_switch_button_turn(acc)):
                     # 按鈕選定回合 ⛔ 呼叫主模型——程式觸發的結果非終結 ⇒ 由程式狀態
                     # 回話結束回合（B 片開關 off 時亦同）。
                     return await self._write_reply_program_exit(acc, identity, agent_state, user_message)
@@ -9982,7 +10516,10 @@ class AgentRuntime:
                 continue
             reissue_exit = (self._write_draft_reissue_exit(acc, agent_state, user_message)
                             or self._write_draft_card_still_valid_exit(acc, agent_state, user_message)
-                            or self._write_draft_submitted_exit(acc, agent_state, user_message))
+                            or self._write_draft_submitted_exit(acc, agent_state, user_message)
+                            # 填欄結構化 S4／S3：主模型輸出轉人時照現行轉人（⛔ 搶走轉人出口）。
+                            or (self._fill_structured_exit(acc, agent_state, user_message)
+                                if out.kind != "handoff" else None))
             if reissue_exit is not None:
                 return reissue_exit
 

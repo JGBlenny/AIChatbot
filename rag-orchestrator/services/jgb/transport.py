@@ -49,6 +49,83 @@ FALLBACK_MESSAGE = "目前無法查詢資料，請稍後再試或聯繫您的管
 HttpMethod = Literal["GET", "POST", "PATCH"]
 
 
+# ── 寫入改接片 W6／W7：寫入結果的封閉錯誤碼 ─────────────────────────────────────
+#: 會寫 JGB 的 HTTP 方法（開關 on 時只有這兩種走寫入分類與寫入逾時；GET 一律照舊）。
+WRITE_METHODS: "frozenset[str]" = frozenset({"POST", "PATCH"})
+#: 請求可能已到 JGB、結果無法確定（逾時、5xx、送出後連線／讀取錯誤、2xx 非 JSON、2xx 缺 `data.id`）。
+WRITE_RESULT_UNCONFIRMED: str = "unconfirmed"
+#: 確定沒有寫入、但不在白名單內的拒絕（白名單外 4xx、金鑰層、404 折疊、送出前連線失敗）。
+WRITE_RESULT_FAILED: str = "failed"
+#: 寫入 HTTP 逾時（W7）：multipart 60 秒、其他寫入 30 秒；讀取維持 `JGBSystemAPI.timeout`（10 秒）。
+WRITE_TIMEOUT_MULTIPART_S: float = 60.0
+WRITE_TIMEOUT_S: float = 30.0
+
+#: W6 封閉白名單：`(端點樣板, HTTP 狀態碼, 訊息全文)` ⇒ 錯誤碼。訊息全文逐字照抄 jgb2
+#: `origin/staging` `544e8592eb`（`EstateController`／`ContractController`／`BillController` 的 `MSG_*` 常數、
+#: `RepairController::store` 的兩句 `errorResponse(400, …)`），狀態碼照各自 `error(...)` 呼叫點。
+#: ⚠️ 只收**全文完全相符**：`externalInvalidField` 會插入欄位名（`field + ' ' + reason`），一律落到白名單外。
+#: ⚠️ 金鑰層（`MSG_ROOT_KEY`、`MSG_QUERY_KEY`、`MSG_NO_KEY`、`MSG_IDENTITY_REQUIRED`、`MSG_UNKNOWN_FIELD`、
+#:    `MSG_OWNERSHIP_FIELD`）與 404（`MSG_NOT_FOUND`）刻意不列 ⇒ `WRITE_RESULT_FAILED`。
+#: 錯誤碼 ⇒ 給客人的固定句在 `services/agent/confirm_card.WRITE_RESULT_TEXTS`（測試以集合相等互證）。
+WRITE_REJECTION_WHITELIST: "dict[tuple[str, int, str], str]" = {
+    # EstateController（POST /estates）
+    ("/api/external/v1/estates", 403, "此團隊目前沒有有效的訂閱方案"): "no_subscription",
+    ("/api/external/v1/estates", 422, "物件數量已達訂閱方案上限"): "estate_limit",
+    ("/api/external/v1/estates", 400, "縣市或行政區無法辨識"): "address_unresolved",
+    # ContractController（POST /contracts）
+    ("/api/external/v1/contracts", 403, "此團隊目前沒有有效的訂閱方案"): "no_subscription",
+    ("/api/external/v1/contracts", 422, "合約數量已達訂閱方案上限"): "contract_limit",
+    ("/api/external/v1/contracts", 422, "公司電話未填寫，請先到團隊資訊填寫"): "company_phone",
+    ("/api/external/v1/contracts", 422, "操作成員的手機號碼未綁定，請先到帳號資訊綁定"): "user_phone",
+    ("/api/external/v1/contracts", 422, "車位物件無法新增合約"): "parking",
+    ("/api/external/v1/contracts", 422, "請先完善物件所有必填欄位"): "estate_incomplete",
+    ("/api/external/v1/contracts", 422, "物件擁有者資料不存在"): "estate_owner",
+    ("/api/external/v1/contracts", 422,
+     "該物件有效合約數量已達 10 份上限，需刪除或結束合約後才能再新增"): "estate_contract_limit",
+    # BillController（POST /bills/manual、PATCH /bills/{id}）
+    ("/api/external/v1/bills/manual", 422, "此合約尚未綁定承租方，無法建立帳單"): "no_lessee",
+    ("/api/external/v1/bills/{bill_id}", 422, "只有待發送的帳單可以修改到期日"): "due_not_draft",
+    # RepairController（POST /repairs）
+    ("/api/external/v1/repairs", 400, "修繕分類不存在或已停用"): "repair_category",
+    ("/api/external/v1/repairs", 400, "修繕項目不屬於此分類或已停用"): "repair_item",
+}
+
+#: 封閉值域：白名單的每個錯誤碼＋`unconfirmed`＋`failed`。
+WRITE_RESULT_CODES: "frozenset[str]" = frozenset(
+    set(WRITE_REJECTION_WHITELIST.values()) | {WRITE_RESULT_UNCONFIRMED, WRITE_RESULT_FAILED})
+
+
+def classify_write_failure(template: str, status: Any, message: Any) -> str:
+    """寫入失敗 ⇒ 封閉錯誤碼（W6／W7）。
+
+    4xx：`(樣板, 狀態碼, 訊息全文)` 完全相符 ⇒ 白名單錯誤碼，否則 `failed`。
+    5xx 與其他非 4xx 狀態 ⇒ `unconfirmed`（請求已到 JGB，結果無法確定）。"""
+    if isinstance(status, bool) or not isinstance(status, int):
+        return WRITE_RESULT_UNCONFIRMED
+    if 400 <= status < 500:
+        if isinstance(message, str):
+            return WRITE_REJECTION_WHITELIST.get((template, status, message), WRITE_RESULT_FAILED)
+        return WRITE_RESULT_FAILED
+    return WRITE_RESULT_UNCONFIRMED
+
+
+def _write_failure_response(status: int, reason: str) -> "TransportResponse":
+    """寫入失敗的契約外殼：訊息一律固定句（⛔ JGB 原文），錯誤碼放 `error.reason`。"""
+    return {"success": False,
+            "error": {"code": status, "message": FALLBACK_MESSAGE, "reason": reason}}
+
+
+def mock_write_failure(method: str, path: str, resp: Any) -> Any:
+    """替身路徑（開關 on）的寫入結果：成功原樣回；失敗依 `classify_write_failure` 換成同一個外殼。"""
+    if not isinstance(resp, dict) or resp.get("success") is True:
+        return resp
+    err = resp.get("error") if isinstance(resp.get("error"), dict) else {}
+    status = err.get("code")
+    reason = classify_write_failure(endpoint_template(method, path), status, err.get("message"))
+    return _write_failure_response(status if isinstance(status, int) and not isinstance(status, bool)
+                                   else 500, reason)
+
+
 class Pagination(TypedDict):
     """分頁外殼（對齊 External API 回應）。"""
     current_page: int
@@ -202,7 +279,8 @@ class RealHttpTransport:
     「沒有憑證」從一個到執行期才靜默降級的狀態，提早成一個開不起來的狀態。
     """
 
-    def __init__(self, base_url: str, api_key: str, timeout: float) -> None:
+    def __init__(self, base_url: str, api_key: str, timeout: float, *,
+                 write_wiring: bool = False) -> None:
         if not isinstance(api_key, str) or not api_key.strip():
             # ⛔ 訊息不含任何憑證片段（連長度都不印）。
             raise MissingCredentialError(
@@ -212,6 +290,12 @@ class RealHttpTransport:
         self.base_url = base_url
         self.api_key = api_key
         self.timeout = timeout
+        #: 寫入改接片 W1：`JGBSystemAPI.write_wiring` 的值（建構時傳入，⛔ 自己讀 env）。
+        #: True ⇒ POST／PATCH 走寫入逾時與寫入結果分類（`_send_write`）；False ⇒ 逐字照舊。
+        self.write_wiring = write_wiring is True
+
+    def _client(self, timeout: float) -> httpx.AsyncClient:
+        return httpx.AsyncClient(timeout=timeout)
 
     def _headers(self) -> dict[str, str]:
         return {"X-API-Key": self.api_key}
@@ -234,8 +318,11 @@ class RealHttpTransport:
         # 例外類別、狀態碼——⛔ 不記完整網址（路徑段含 role_id／user_id／編號）、
         # ⛔ 不記例外訊息（httpx 的 `HTTPStatusError` 訊息含完整 query）。
         template = endpoint_template(method, path)
+        if self.write_wiring and method in WRITE_METHODS:
+            return await self._send_write(method, url, template, params, body_kwargs,
+                                          multipart=files is not None)
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with self._client(self.timeout) as client:
                 response = await client.request(
                     method, url,
                     params=params, **body_kwargs,
@@ -258,6 +345,58 @@ class RealHttpTransport:
         except ValueError as e:                      # 回應不是 JSON
             logger.error("JGB API %s %s 回應解析失敗：%s", method, template, type(e).__name__)
             return self._fallback_response()
+
+    async def _send_write(
+        self, method: str, url: str, template: str,
+        params: Optional[dict[str, Any]], body_kwargs: "dict[str, Any]", *, multipart: bool,
+    ) -> TransportResponse:
+        """寫入改接片 W6／W7（開關 on 的 POST／PATCH）：送出並把結果分成封閉錯誤碼。
+
+        - 2xx：`success` 為 true 的 JSON 物件原樣回（`data.id` 由 `tools/action.py` 判，缺 ⇒ `unconfirmed`）；
+          非 JSON／非物件／不是成功外殼 ⇒ `unconfirmed`。
+        - 4xx：`(樣板, 狀態碼, 訊息全文)` 白名單 ⇒ 該碼；其餘（含金鑰層、404 折疊）⇒ `failed`。
+        - 5xx、其他狀態、逾時、送出後的連線或讀取錯誤 ⇒ `unconfirmed`（請求可能已寫入）。
+        - 送出前就連不上（`ConnectError`、`UnsupportedProtocol`、`ProxyError`）⇒ `failed`。
+        log 只記方法、端點樣板、狀態碼、錯誤碼——⛔ JGB 訊息全文、⛔ 完整網址、⛔ 例外訊息。
+        """
+        timeout = WRITE_TIMEOUT_MULTIPART_S if multipart else WRITE_TIMEOUT_S
+        try:
+            async with self._client(timeout) as client:
+                response = await client.request(
+                    method, url, params=params, **body_kwargs, headers=self._headers(),
+                )
+        except (httpx.ConnectError, httpx.UnsupportedProtocol, httpx.ProxyError) as e:
+            logger.error("JGB API %s %s 寫入未送出：%s ⇒ %s", method, template,
+                         type(e).__name__, WRITE_RESULT_FAILED)
+            return _write_failure_response(500, WRITE_RESULT_FAILED)
+        except httpx.HTTPError as e:                  # 逾時、讀取／寫出／協定錯誤：可能已送到
+            logger.error("JGB API %s %s 寫入結果未知：%s ⇒ %s", method, template,
+                         type(e).__name__, WRITE_RESULT_UNCONFIRMED)
+            return _write_failure_response(500, WRITE_RESULT_UNCONFIRMED)
+        status = int(response.status_code)
+        if 200 <= status < 300:
+            try:
+                body = response.json()
+            except ValueError:
+                body = None
+            # ⚠️ 只有 `success` 恰為 true 的物件原樣回；2xx 卻不是成功外殼 ⇒ 結果未確認——
+            #    ⛔ 讓 2xx 回應裡的任何 `error` 欄位流到 `tools/action.py` 的錯誤碼判斷。
+            if isinstance(body, dict) and body.get("success") is True:
+                return body
+            logger.error("JGB API %s %s 寫入 %d 回應不是成功的 JSON 物件 ⇒ %s", method, template,
+                         status, WRITE_RESULT_UNCONFIRMED)
+            return _write_failure_response(500, WRITE_RESULT_UNCONFIRMED)
+        message: Any = None
+        if 400 <= status < 500:
+            try:
+                parsed = response.json()
+            except ValueError:
+                parsed = None
+            err = parsed.get("error") if isinstance(parsed, dict) else None
+            message = err.get("message") if isinstance(err, dict) else None
+        reason = classify_write_failure(template, status, message)
+        logger.error("JGB API %s %s 寫入 %d ⇒ %s", method, template, status, reason)
+        return _write_failure_response(status if 400 <= status < 500 else 500, reason)
 
 
 # ── 4.2：template endpoint 解析 ────────────────────────────────────────────
@@ -322,6 +461,8 @@ ROUTES: "tuple[tuple[HttpMethod, str, str], ...]" = (
     ("POST", "/api/external/v1/estates", "assistant_create_estate"),                       # jgb2-req#19
     ("POST", "/api/external/v1/contracts", "assistant_create_contract"),                   # jgb2-req#20
     ("POST", "/api/external/v1/bills/manual", "assistant_create_bill"),                    # jgb2-req#21
+    # 寫入改接片 W3：改到期日（jgb2 `origin/staging` `544e8592eb` `BillController::updateDueDate`）。
+    ("PATCH", "/api/external/v1/bills/{bill_id}", "assistant_patch_bill_due"),             # jgb2-req#23
 )
 
 
@@ -427,6 +568,7 @@ MIGRATED_ENDPOINTS: "frozenset[str]" = frozenset({
 #: 分開列才不會把「JGB 還沒有的契約」讀成「已遷移的真端點」。
 PROPOSED_ENDPOINTS: "frozenset[str]" = frozenset({
     "assistant_create_estate", "assistant_create_contract", "assistant_create_bill",
+    "assistant_patch_bill_due",
 })
 
 #: 站內幫手 S2：替身寫入紀錄的 env 名（值＝JSON Lines 檔路徑；未設 ⇒ 完全不寫）。
@@ -436,6 +578,7 @@ MOCK_WRITE_LOG_ENV: str = "JGB_MOCK_WRITE_LOG"
 WRITE_ENDPOINTS: "frozenset[str]" = frozenset({
     "create_bill", "create_contract", "create_estate", "create_repair", "patch_bill",
     "assistant_create_estate", "assistant_create_contract", "assistant_create_bill",
+    "assistant_patch_bill_due",
 })
 
 
@@ -563,8 +706,9 @@ class JGBMockTransport:
         cfg = self._assistant_cfg or {}
         policy = (((cfg.get("endpoints") or {}).get("jgb2-req#22") or {}).get("photo_policy") or {})
         return {
-            "content_types": tuple(policy.get("content_types") or ("image/jpeg", "image/png", "image/webp")),
-            "max_bytes": int(policy.get("max_bytes") or 5 * 1024 * 1024),
+            # 寫入改接片 W3：預設值照 staging `RepairController`（只收 JPEG／PNG、每張 ≤ 5,000,000 bytes）。
+            "content_types": tuple(policy.get("content_types") or ("image/jpeg", "image/png")),
+            "max_bytes": int(policy.get("max_bytes") or 5_000_000),
         }
 
     def _multipart_repair_body(
@@ -601,7 +745,7 @@ class JGBMockTransport:
                       and 0 < len(content) <= policy["max_bytes"]
                       and self._PHOTO_MAGIC.get(ctype, lambda b: False)(bytes(content[:12])))
             if not ok:
-                return None, self._error(422, "broken_photos[] 每個檔須為 jpeg／png／webp（內容與型別相符）且 ≤ 5 MB")
+                return None, self._error(422, "broken_photos[] 每個檔須為 jpeg／png（內容與型別相符）且 ≤ 5,000,000 bytes")
             photos.append({"filename": filename, "content_type": ctype, "size": len(content),
                            "sha256": hashlib.sha256(bytes(content)).hexdigest()})
         body["broken_photos"] = photos
@@ -642,6 +786,7 @@ class JGBMockTransport:
     _WRITE_DOMAIN: "dict[str, str]" = {
         "create_repair": "repairs",
         "create_bill": "bills", "patch_bill": "bills", "assistant_create_bill": "bills",
+        "assistant_patch_bill_due": "bills",
         "create_contract": "contracts", "assistant_create_contract": "contracts",
         "create_estate": "estates", "assistant_create_estate": "estates",
     }
@@ -719,6 +864,11 @@ class JGBMockTransport:
 
         params = params or {}
         data = data or {}
+        if endpoint_key == "assistant_patch_bill_due":
+            bill_id = match_template("/api/external/v1/bills/{bill_id}", path)["bill_id"]
+            return self._with_idempotency(
+                f"assistant_patch_bill_due:{bill_id}", data,
+                lambda: self._assistant_patch_bill_due(bill_id, data))
         if endpoint_key in PROPOSED_ENDPOINTS:
             return self._send_proposed(endpoint_key, params, data)
         if endpoint_key == "bills":
@@ -1461,6 +1611,41 @@ class JGBMockTransport:
             },
         }
 
+    #: 寫入改接片 W3：`PATCH /api/external/v1/bills/{id}` 收的鍵＝jgb2 `origin/staging` `544e8592eb`
+    #: `BillController::DUE_FIELDS`（`date_expire`）＋`ExternalWriteGuard::ALWAYS_ALLOWED_FIELDS`。
+    #: ⛔ 收 `due_date`／`due_date_shift_days`／`confirmation_token`（staging 會 422）。
+    _ASSISTANT_DUE_BODY_KEYS: "frozenset[str]" = frozenset({
+        "date_expire", "role_id", "viewer_user_id", "idempotency_key",
+    })
+    #: jgb2 `Bill::BILL_PREPARE`（待發送）——staging 只准改這個狀態的帳單（`MSG_DUE_NOT_DRAFT`）。
+    _BILL_PREPARE_STATUS: int = 1
+
+    def _assistant_patch_bill_due(self, bill_id: str, data: "dict[str, Any]") -> TransportResponse:
+        """替身 `PATCH /api/external/v1/bills/{id}`，照 staging `544e8592eb` `BillController::updateDueDate`：
+
+        歸屬／未知欄位 422 → 身分 → 帳單可見（否則折疊 404）→ `date_expire` 須 `YYYY-MM-DD`（400）→
+        非待發送 422「只有待發送的帳單可以修改到期日」→ 改 `date_expire`（YYYYMMDD 整數）→ 回 `formatBill` 形狀。
+        """
+        self._require(self.fixtures, "assistant_patch_bill_due")
+        ident, err = self._write_guard(data, self._ASSISTANT_DUE_BODY_KEYS)
+        if err:
+            return err
+        _role_id, viewer = ident
+        try:
+            row = self.fixtures.by_id(int(bill_id))
+        except (TypeError, ValueError):
+            row = None
+        if row is None or not self._is_visible("bill", row["id"], viewer):
+            return self._fold()
+        expire = self._parse_ymd(data.get("date_expire"))
+        if expire is None:
+            return self._error(400, "date_expire 必填，格式 YYYY-MM-DD")
+        if int(row.get("status") or 0) != self._BILL_PREPARE_STATUS:
+            return self._error(422, "只有待發送的帳單可以修改到期日")
+        row["date_expire"] = int(expire.strftime("%Y%m%d"))
+        row["updated_at"] = self._PROPOSED_NOW
+        return {"success": True, "data": dict(row)}
+
     # ══════════════════════════════════════════════════════════════════════
     # 站內幫手 S0（plan-assistant-11-items-20261014 §3b）——contract: proposed
     #
@@ -1481,22 +1666,27 @@ class JGBMockTransport:
     #: 與其他寫入端點相同的固定戳記（fixture 時間，非現在）。
     _PROPOSED_NOW: str = "2026-09-08 19:00:00"
 
+    #: 寫入改接片 W3：四支寫入的冪等鍵只收 `idempotency_key`——照 jgb2 `origin/staging` `544e8592eb`
+    #: `ExternalWriteGuard::ALWAYS_ALLOWED_FIELDS`（`role_id`、`viewer_user_id`、`idempotency_key`）；
+    #: `confirmation_token` 在 staging 是白名單外（422），替身 ⛔ 比 staging 寬。
+    _STAGING_IDEMPOTENCY_KEY: "frozenset[str]" = frozenset({"idempotency_key"})
+
     _ESTATE_BODY_KEYS: "frozenset[str]" = frozenset({
         "role_id", "viewer_user_id", "title", "city", "district", "address", "use_for",
         "space_type", "building", "room_count", "size", "rent", "floor",
-    }) | _IDEMPOTENCY_KEYS
+    }) | _STAGING_IDEMPOTENCY_KEY
     _CONTRACT_BODY_KEYS: "frozenset[str]" = frozenset({
         "role_id", "viewer_user_id", "estate_id", "title", "to_user_email", "to_user_phone",
         "date_start", "date_end", "rent", "deposit_amount",
-    }) | _IDEMPOTENCY_KEYS
+    }) | _STAGING_IDEMPOTENCY_KEY
     _BILL_BODY_KEYS: "frozenset[str]" = frozenset({
         "role_id", "viewer_user_id", "contract_id", "title", "sub_title", "total", "date_expire",
-    }) | _IDEMPOTENCY_KEYS
+    }) | _STAGING_IDEMPOTENCY_KEY
     #: `POST /repairs` 在提案契約下的 body 鍵（既有鍵＋`viewer_user_id`，JGB 中介層認的成員身分鍵名）。
     _REPAIR_BODY_KEYS: "frozenset[str]" = frozenset({
         "role_id", "viewer_user_id", "estate_id", "category_id", "item_id", "broken_reason",
         "broken_note", "emergency_status", "contract_id", "broken_photos",
-    }) | _IDEMPOTENCY_KEYS
+    }) | _STAGING_IDEMPOTENCY_KEY
 
     # ── 共用：身分、歸屬、可見性 ─────────────────────────────────────────
 
@@ -1888,5 +2078,5 @@ class JGBMockTransport:
                     or not isinstance(p["sha256"], str)
                     or not re.fullmatch(r"[0-9a-f]{64}", p["sha256"])):
                 return self._error(422, "broken_photos 每張須為 {filename, content_type, size, sha256}，"
-                                        "型別為 jpeg／png／webp 且 ≤ 5 MB")
+                                        "型別為 jpeg／png 且 ≤ 5,000,000 bytes")
         return None

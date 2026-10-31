@@ -166,6 +166,7 @@ services:
       JGB_API_BASE_URL: ${JGB_API_BASE_URL:-https://preview.jgbsmart.com}
       JGB_API_KEY: ${JGB_API_KEY:-}
       USE_MOCK_JGB_API: ${USE_MOCK_JGB_API:-true}
+      JGB_WRITE_WIRING: ${JGB_WRITE_WIRING:-}                      # 空＝off；on＝五項寫入與修繕照片送真 JGB（只在 JGB_API_BASE_URL 主機為 staging.jgbsmart.com 或替身模式生效，其他主機當 off）
       # RAG 檢索配置 - ✅ 選項1：統一檢索閾值（移除獨立 RAG fallback）
       KB_SIMILARITY_THRESHOLD: 0.65  # 比對 final similarity（application 端過濾知識庫候選，涵蓋原 fallback 範圍）
       # PRESALES_EXTRACTIVE: "1"  # presales-grounding-gate D6 事實題抽取式作答；業主 2026-09-04 裁預設關（先補知識再考慮），要開再取消註解
@@ -270,10 +271,11 @@ services:
       AGENT_WRITE_DRAFT: ${AGENT_WRITE_DRAFT:-}                    # 空＝on；寫入草稿由程式掌握（plan-write-flow W1／DSP-085）；off＝撤回 write_intent schema、草稿、程式觸發；其他值啟動失敗
       AGENT_FILL_DATA_TEXT: ${AGENT_FILL_DATA_TEXT:-}              # 空＝on；單欄追問回合只填答覆（plan-fill-answer-only-20261027）；off＝寫入意圖系統句、schema、值閘與改前相同；其他值啟動失敗
       AGENT_FILL_DATA_TEXT_WIDE: ${AGENT_FILL_DATA_TEXT_WIDE:-}    # 空＝on；首句、卡後、多欄回合也由資料段驗值（plan-fill-wide-20261028）；只在 AGENT_FILL_DATA_TEXT on 時生效；off＝三種回合與改前相同；其他值啟動失敗
+      AGENT_FILL_STRUCTURED: ${AGENT_FILL_STRUCTURED:-}            # 空＝off；填欄結構化（plan-fill-structured-20261030）；on 須 AGENT_WRITE_DRAFT、AGENT_WRITE_LIFECYCLE、AGENT_WRITE_PROPOSAL、AGENT_CLOSING_HANDOFF 全 on；其他值或前置不合啟動失敗
       AGENT_ATTEMPT_LOG_PATH: ${AGENT_ATTEMPT_LOG_PATH:-}          # 開發量測用；正式⛔不設
       OPENAI_TIMEOUT_S: ${OPENAI_TIMEOUT_S:-}                      # agent 每次模型呼叫 SDK 逾時秒數；空＝SDK 預設 600（第六批 #11 建議 25）
       # 站內幫手（plan-assistant-11-items §3h／§3i；2026-10-15）——空字串＝程式視同未設，唯 IMAGE_URL_ALLOWLIST 空＝全擋，故預設寫程式預設值
-      AGENT_ASSISTANT_KEY_IDS: ${AGENT_ASSISTANT_KEY_IDS:-}         # 站內幫手金鑰 id（逗號分隔整數）；列入者缺 user_id ⇒ 400；正式機必設
+      AGENT_ASSISTANT_KEY_IDS: ${AGENT_ASSISTANT_KEY_IDS:-}         # 站內幫手金鑰 id（逗號分隔整數）；列入者缺 user_id ⇒ 400；只有列入者看得到、執行得了寫入工具（空＝寫入工具全部不可見）；正式機必設
       IMAGE_URL_ALLOWLIST: ${IMAGE_URL_ALLOWLIST:-relay.jgbsmart.com} # 有值即取代（非附加）；relay 以外網域須帶 exp（≤900 秒）
       DOCUMENT_EXTRACTION_MODEL: ${DOCUMENT_EXTRACTION_MODEL:-}     # 空＝程式預設；站內幫手驗收 gpt-6-luna
       DOCUMIND_BASE_URL: ${DOCUMIND_BASE_URL:-}                     # 空＝謄本功能關閉；正式只准 https 且須 DOCUMIND_TOKEN

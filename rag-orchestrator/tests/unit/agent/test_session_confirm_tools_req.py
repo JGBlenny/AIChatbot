@@ -706,8 +706,10 @@ def _registry_with_2_4_tools():
 
 
 @pytest.mark.req(_REQ)
-def test_no_write_tool_visible_before_m3():
+def test_no_write_tool_visible_before_m3(monkeypatch):
     """M0–M3 任一 stage 下 `specs_for` 都拿不到 write 工具；同一次呼叫拿得到 read 工具（正對照組）。"""
+    # 寫入改接片 W8：寫入工具只給站內幫手金鑰 ⇒ `_identity()` 的金鑰 id 7 列入（M4 反向對照仍看得到，期望值不變）。
+    monkeypatch.setenv("AGENT_ASSISTANT_KEY_IDS", "7")
     registry = _registry_with_2_4_tools()
     registry.register(_FAKE_WRITE_SPEC, _noop_fn)
     # `entry="mcp"`：⛔ 不用預設的 `"rest"`——那樣「看不見」會是**入口**擋的，
